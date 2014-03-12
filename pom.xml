@@ -1,92 +1,75 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	
-	<parent>
-		<groupId>com.kurento</groupId>
-		<artifactId>kmf-parent-pom</artifactId>
-		<version>4.1.0</version>
-	</parent>
+    <modelVersion>4.0.0</modelVersion>
 
-	<groupId>com.kurento.kmf</groupId>
-	<artifactId>kmf-content-demo</artifactId>
-	<version>4.1.1-SNAPSHOT</version>
-	<packaging>war</packaging>
+    <parent>
+        <groupId>com.kurento</groupId>
+        <artifactId>kmf-parent-pom</artifactId>
+        <version>4.0.1-SNAPSHOT</version>
+    </parent>
 
-	<name>Kurento Media Framework - Demo</name>
-	<description>
-		Kurento Media Framework base demo
+    <groupId>com.kurento.kmf</groupId>
+    <artifactId>kmf-content-demo</artifactId>
+    <packaging>war</packaging>
 
-		Implements several examples of use of kurento content-api
-		and kurento media-api.
-	</description>
-	<url>http://www.kurento.com/docs/${project.version}</url>
+    <name>kurento-streaming-demo</name>
+    <description>This demo allows a User to share a stream with other users, all subscribed to the same URL.</description>
 
-	<licenses>
-		<license>
-			<name>GNU Lesser General Public License</name>
-			<url>http://www.gnu.org/licenses/lgpl-2.1.txt</url>
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
-
-	<scm>
-		<url>https://github.com/Kurento/${project.artifactId}</url>
-		<connection>scm:git:https://github.com/Kurento/${project.artifactId}.git</connection>
-		<developerConnection>scm:git:ssh://git@github.com:Kurento/${project.artifactId}.git</developerConnection>
-		<tag>develop</tag>
-	</scm>
-
-	<developers>
-		<developer>
-			<id>kurento.org</id>
-			<name>-kurento.org Community</name>
-			<organization>Kurento.org</organization>
-			<organizationUrl>http://www.kurento.org</organizationUrl>
-		</developer>
-	</developers>
-
-	<dependencies>
-		<dependency>
-			<groupId>com.kurento.kmf</groupId>
-			<artifactId>kmf-content-api</artifactId>
-			<version>${kmf-content-api.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.kurento.kws</groupId>
-			<artifactId>kws-content-api</artifactId>
-			<version>${kws-content-api.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>javax.servlet</groupId>
-			<artifactId>javax.servlet-api</artifactId>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.thetransactioncompany</groupId>
-			<artifactId>cors-filter</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.google.apis</groupId>
-			<artifactId>google-api-services-youtube</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.google.http-client</groupId>
-			<artifactId>google-http-client-jackson2</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.google.oauth-client</groupId>
-			<artifactId>google-oauth-client-jetty</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
-
+    <dependencies>
+        <dependency>
+            <groupId>com.kurento.kmf</groupId>
+            <artifactId>kmf-content-api</artifactId>
+            <version>${kmf-content-api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.kurento.kws</groupId>
+            <artifactId>kws-content-api</artifactId>
+            <version>${kws-content-api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.thetransactioncompany</groupId>
+            <artifactId>cors-filter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-youtube</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.http-client</groupId>
+            <artifactId>google-http-client-jackson2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.oauth-client</groupId>
+            <artifactId>google-oauth-client-jetty</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    
+    <repositories>
+        <repository>
+            <id>kurento-snapshots</id>
+            <name>Kurento Snapshot Repository</name>
+            <url>http://repository.kurento.com/archiva/repository/snapshots/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+    
 </project>

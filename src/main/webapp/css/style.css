@@ -1,0 +1,88 @@
+/*
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+*/
+/* 
+    Created on : 07-mar-2014, 10:49:14
+    Author     : kalel_000
+*/
+
+html, body{
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family:"Verdana", Sans-serif;
+    background-color: #F4F4F4;
+}
+.header{
+    background-color: #30406B;
+    border-bottom: 2px solid black;
+    font-size: 2.5em;
+    padding: 30px;
+    color: white;
+    text-align: left;
+}
+section{
+    display: inline-block;
+    width: 90%;
+    margin: 5%;
+    margin-bottom: 0;
+    background-color: rgba(80,80,80,0.4); 
+    font-size: 2em;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+.streaming-section{text-align: center}
+.index-article{
+    width: 50%;
+    height: 100%;
+    display: inline-block;
+    float: left;
+}
+.index-article a{text-decoration: none; color: black}
+.index-article:last-child{text-align: center}
+.index-article:last-child img{margin: 30px}
+article p, article ul{margin-left: 5%}
+li{margin-left: 100px}
+.streaming-article{
+    width: 100%;
+    padding-top: 40px;
+    padding-bottom: 40px;
+}
+#streaming-remoteVideo{
+    width: 50%;
+    display: block;
+    margin-left: 25%;
+    border: 2px solid black;
+    background-color: white;
+}
+button{
+    width: 100px;
+    height: 40px;
+    display: inline-block;
+}
+button:hover{
+    cursor: pointer;
+    background-color: rgb(100,100,100);
+    border: 1px solid black;
+}
+footer, #console{
+    width: 90%;
+    margin: 5%;
+    margin-top: 0;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    background-color: rgb(80,80,80); 
+    font-size: 0.7em;
+    color: white;
+    text-align: center;
+}
+footer{margin-bottom: 0}
+#console{
+    background-color: rgb(120,240,83); 
+    font-size: 0.75em;
+    color: black;
+    text-align: justify;
+}
