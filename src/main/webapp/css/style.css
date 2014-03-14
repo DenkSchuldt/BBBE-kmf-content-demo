@@ -86,3 +86,25 @@ footer{margin-bottom: 0}
     color: black;
     text-align: justify;
 }
+#localVideo{
+    width: 50%;
+    display: block;
+    margin-left: 25%;
+    border: 2px solid black;
+    background-color: white;
+}
+#videos{
+    margin-top: 30px;
+    margin-bottom: 30px;
+    width: 100%;
+    display: block;
+    background-color: rgb(150,150,150);
+    text-align: center;
+}
+#videos video{
+    display: inline-block;
+    width: 25%;
+    margin: 2%;
+    border: 2px solid black;
+    background-color: white;
+}
