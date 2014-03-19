@@ -86,7 +86,7 @@ footer{margin-bottom: 0}
     color: black;
     text-align: justify;
 }
-#localVideo{
+.principal{
     width: 50%;
     display: block;
     margin-left: 25%;
@@ -108,3 +108,4 @@ footer{margin-bottom: 0}
     border: 2px solid black;
     background-color: white;
 }
+#videos video:hover{cursor:pointer}

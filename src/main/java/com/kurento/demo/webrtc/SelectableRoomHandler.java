@@ -34,13 +34,10 @@ import com.kurento.kmf.content.WebRtcContentService;
 import com.kurento.kmf.content.WebRtcContentSession;
 import com.kurento.kmf.media.MediaPipeline;
 import com.kurento.kmf.media.WebRtcEndpoint;
-import com.kurento.demo.webrtc.WebRTCParticipant;
-import static javax.management.Query.gt;
-import static javax.management.Query.lt;
 
 /**
  * WebRtc Handler for OneToMany rooms.
- * 
+ *
  * @author Miguel París Díaz (mparisdiaz@gmail.com)
  * @author Ivan Gracia (izanmail@gmail.com)
  * @author Boni Garcia (bgarcia@gsyc.es)
@@ -49,145 +46,133 @@ import static javax.management.Query.lt;
 @WebRtcContentService(path = "/selectable/*")
 public class SelectableRoomHandler extends WebRtcContentHandler {
 
-	/* Commands */
-	public static final String COMMAND_GET_PARTICIPANTS = "getParticipants";
-	public static final String COMMAND_SELECT = "selectParticipant";
-	public static final String COMMAND_CONNECT = "connectParticipant";
+    /* Commands */
+    public static final String COMMAND_GET_PARTICIPANTS = "getParticipants";
+    public static final String COMMAND_SELECT = "selectParticipant";
+    public static final String COMMAND_CONNECT = "connectParticipant";
 
-	/* Events */
-	public static final String EVENT_ON_JOINED = "onJoined";
-	public static final String EVENT_ON_UNJOINED = "onUnjoined";
+    /* Events */
+    public static final String EVENT_ON_JOINED = "onJoined";
+    public static final String EVENT_ON_UNJOINED = "onUnjoined";
 
-	/* Global variables */
-	private MediaPipeline mp;
-	private Map&lt; String, WebRTCParticipant&gt; participants;
-	public static AtomicInteger globalId;
-	private static final Gson gson = new GsonBuilder()
-			.excludeFieldsWithModifiers(TRANSIENT).create();
+    /* Global variables */
+    private MediaPipeline mp;
+    private Map<String, WebRTCParticipant> participants;
+    public static AtomicInteger globalId;
+    private static final Gson gson = new GsonBuilder().excludeFieldsWithModifiers(TRANSIENT).create();
 
-	@Override
-	public void onContentRequest(WebRtcContentSession session) throws Exception {
-		if (mp == null) {
-			synchronized (this) {
-				if (mp == null) {
-					mp = session.getMediaPipelineFactory().create();
-					participants = new ConcurrentHashMap&lt;String, WebRTCParticipant&gt;();
-					globalId = new AtomicInteger();
-				}
-			}
-		}
-		String name = session.getContentId();
-		if (name == null || name.isEmpty()) {
-			name = "&lt;no name&gt;";
-		}
-		if (existName(name)) {
-			session.terminate(403, "User " + name + " is already in the room. "
-					+ "Please select another name and try again.");
-		} else {
-			WebRtcEndpoint endpoint = mp.newWebRtcEndpoint().build();
-			WebRTCParticipant participant = new WebRTCParticipant(Integer.toString(SelectableRoomHandler.globalId
-					.incrementAndGet()), name, endpoint, session);
-			participant.endpoint.connect(participant.endpoint);
-			session.start(participant.endpoint);
-			session.setAttribute("participant", participant);
-			participants.put(participant.getId(), participant);
-			notifyJoined(participant);
-		}
-	}
+    @Override
+    public void onContentRequest(WebRtcContentSession session) throws Exception {
+        if (mp == null) {
+            synchronized (this) {
+                if (mp == null) {
+                    mp = session.getMediaPipelineFactory().create();
+                    participants = new ConcurrentHashMap<String, WebRTCParticipant>();
+                    globalId = new AtomicInteger();
+                }
+            }
+        }
+        String name = session.getContentId();
+        if (name == null || name.isEmpty()) {
+            name = "&lt;no name&gt;";
+        }
+        if (existName(name)) {
+            session.terminate(403, "User " + name + " is already in the room. " + "Please select another name and try again.");
+        } else {
+            WebRtcEndpoint endpoint = mp.newWebRtcEndpoint().build();
+            WebRTCParticipant participant = new WebRTCParticipant(Integer.toString(SelectableRoomHandler.globalId.incrementAndGet()), name, endpoint, session);
+            participant.endpoint.connect(participant.endpoint);
+            session.start(participant.endpoint);
+            session.setAttribute("participant", participant);
+            participants.put(participant.getId(), participant);
+            notifyJoined(participant);
+        }
+    }
 
-	@Override
-	public ContentCommandResult onContentCommand(WebRtcContentSession session,
-			ContentCommand command) throws Exception {
-		String cmdType = command.getType();
-		String cmdData = command.getData();
-		getLogger().info("onContentCommand: ({}, {})", cmdType, cmdData);
+    @Override
+    public ContentCommandResult onContentCommand(WebRtcContentSession session, ContentCommand command) throws Exception {
+        String cmdType = command.getType();
+        String cmdData = command.getData();
+        getLogger().info("onContentCommand: ({}, {})", cmdType, cmdData);
+        if (COMMAND_GET_PARTICIPANTS.equalsIgnoreCase(cmdType)) {
+            String json = gson.toJson(participants.values());
+            return new ContentCommandResult(json);
+        } else if (COMMAND_SELECT.equalsIgnoreCase(cmdType)) {
+            return new ContentCommandResult(Boolean.toString(selectParticipant(session, cmdData)));
+        } else if (COMMAND_CONNECT.equalsIgnoreCase(cmdType)) {
+            Type listType = new TypeToken<List<String>>() {
+            }.getType();
+            List<String> idList = gson.fromJson(cmdData, listType);
+            if (idList.size() != 2) {
+                return new ContentCommandResult(Boolean.FALSE.toString());
+            }
+            return new ContentCommandResult(Boolean.toString(connectParticipant(idList.get(0), idList.get(1))));
+        }
+        return super.onContentCommand(session, command);
+    }
 
-		if (COMMAND_GET_PARTICIPANTS.equalsIgnoreCase(cmdType)) {
-			String json = gson.toJson(participants.values());
-			return new ContentCommandResult(json);
-		} else if (COMMAND_SELECT.equalsIgnoreCase(cmdType)) {
-			return new ContentCommandResult(Boolean.toString(selectParticipant(
-					session, cmdData)));
-		} else if (COMMAND_CONNECT.equalsIgnoreCase(cmdType)) {
-			Type listType = new TypeToken&lt;List&lt;String&gt;&gt;() {
-			}.getType();
-			List&lt;String&gt; idList = gson.fromJson(cmdData, listType);
-			if (idList.size() != 2) {
-				return new ContentCommandResult(Boolean.FALSE.toString());
-			}
-			return new ContentCommandResult(
-					Boolean.toString(connectParticipant(idList.get(0),
-							idList.get(1))));
-		}
-		return super.onContentCommand(session, command);
-	}
+    @Override
+    public synchronized void onSessionTerminated(WebRtcContentSession session, int code, String reason) throws Exception {
+        WebRTCParticipant participant = (WebRTCParticipant) session.getAttribute("participant");
+        participants.remove(participant.getId());
+        notifyUnjoined(participant);
 
-	@Override
-	public synchronized void onSessionTerminated(WebRtcContentSession session,
-			int code, String reason) throws Exception {
-		WebRTCParticipant participant = (WebRTCParticipant) session
-				.getAttribute("participant");
-		participants.remove(participant.getId());
-		notifyUnjoined(participant);
+        if (participants.isEmpty()) {
+            getLogger().info("Clearing room");
+            mp = null;
+            participants.clear();
+        }
+        super.onSessionTerminated(session, code, reason);
+    }
 
-		if (participants.isEmpty()) {
-			getLogger().info("Clearing room");
-			mp = null;
-			participants.clear();
-		}
-		super.onSessionTerminated(session, code, reason);
-	}
+    private boolean selectParticipant(WebRtcContentSession session, String partId) {
+        WebRTCParticipant partSelected = participants.get(partId);
+        if (partSelected == null) {
+            getLogger().error("Participant {} does not exist", partId);
+            return false;
+        }
+        partSelected.endpoint.connect(((WebRTCParticipant) session.getAttribute("participant")).endpoint);
+        return true;
+    }
 
-	private boolean selectParticipant(WebRtcContentSession session,
-			String partId) {
-		WebRTCParticipant partSelected = participants.get(partId);
-		if (partSelected == null) {
-			getLogger().error("Participant {} does not exist", partId);
-			return false;
-		}
-		partSelected.endpoint.connect(((WebRTCParticipant) session
-				.getAttribute("participant")).endpoint);
-		return true;
-	}
+    private boolean connectParticipant(String origId, String destId) {
+        WebRTCParticipant orig = participants.get(origId);
+        if (orig == null) {
+            getLogger().error("Participant {} does not exist", origId);
+            return false;
+        }
+        WebRTCParticipant dest = participants.get(destId);
+        if (dest == null) {
+            getLogger().error("Participant {} does not exist", destId);
+            return false;
+        }
+        orig.endpoint.connect(dest.endpoint);
+        return true;
+    }
 
-	private boolean connectParticipant(String origId, String destId) {
-		WebRTCParticipant orig = participants.get(origId);
-		if (orig == null) {
-			getLogger().error("Participant {} does not exist", origId);
-			return false;
-		}
-		WebRTCParticipant dest = participants.get(destId);
-		if (dest == null) {
-			getLogger().error("Participant {} does not exist", destId);
-			return false;
-		}
-		orig.endpoint.connect(dest.endpoint);
-		return true;
-	}
+    private boolean existName(final String name) {
+        for (WebRTCParticipant p : participants.values()) {
+            if (p.getName().equalsIgnoreCase(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-	private boolean existName(final String name) {
-		for (WebRTCParticipant p : participants.values()) {
-			if (p.getName().equalsIgnoreCase(name)) {
-				return true;
-			}
-		}
-		return false;
-	}
+    private void notifyJoined(WebRTCParticipant participant) {
+        String json = gson.toJson(participant);
+        getLogger().info("Participant joined: {}", json);
+        for (WebRTCParticipant p : participants.values()) {
+            p.session.publishEvent(new ContentEvent(EVENT_ON_JOINED, json));
+        }
+    }
 
-	private void notifyJoined(WebRTCParticipant participant) {
-		String json = gson.toJson(participant);
-		getLogger().info("Participant joined: {}", json);
-		for (WebRTCParticipant p : participants.values()) {
-			p.session.publishEvent(new ContentEvent(EVENT_ON_JOINED, json));
-		}
-	}
-
-	private void notifyUnjoined(WebRTCParticipant participant) {
-		String json = gson.toJson(participant);
-		getLogger().info("Participant unjoined: {}", json);
-		for (WebRTCParticipant p : participants.values()) {
-			p.session.publishEvent(new ContentEvent(EVENT_ON_UNJOINED, json));
-		}
-	}
+    private void notifyUnjoined(WebRTCParticipant participant) {
+        String json = gson.toJson(participant);
+        getLogger().info("Participant unjoined: {}", json);
+        for (WebRTCParticipant p : participants.values()) {
+            p.session.publishEvent(new ContentEvent(EVENT_ON_UNJOINED, json));
+        }
+    }
 
 }

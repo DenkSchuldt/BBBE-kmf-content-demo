@@ -13,35 +13,17 @@
  *
  */
 package com.kurento.demo.webrtc;
-
 import com.kurento.kmf.content.ContentEvent;
 import com.kurento.kmf.content.WebRtcContentHandler;
 import com.kurento.kmf.content.WebRtcContentService;
 import com.kurento.kmf.content.WebRtcContentSession;
-import com.kurento.kmf.media.HttpEndpoint;
 import com.kurento.kmf.media.MediaPipeline;
+import com.kurento.kmf.media.MediaSink;
+import com.kurento.kmf.media.MediaSource;
 import com.kurento.kmf.media.WebRtcEndpoint;
-
-import static java.lang.reflect.Modifier.TRANSIENT;
-
-import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-import com.kurento.kmf.content.ContentCommand;
-import com.kurento.kmf.content.ContentCommandResult;
-import com.kurento.kmf.content.ContentEvent;
-import com.kurento.kmf.content.WebRtcContentHandler;
-import com.kurento.kmf.content.WebRtcContentService;
-import com.kurento.kmf.content.WebRtcContentSession;
-import com.kurento.kmf.media.MediaPipeline;
-import com.kurento.kmf.media.WebRtcEndpoint;
-import com.kurento.demo.WebRTCParticipant;
 
 /**
  * This handler implements a one to many video conference using WebRtcEnpoints;
@@ -58,42 +40,45 @@ import com.kurento.demo.WebRTCParticipant;
 @WebRtcContentService(path = "/multiUserStreaming/*")
 public class multiUserStreaming extends WebRtcContentHandler {
 
-    private WebRtcEndpoint firstWebRtcEndpoint;
-    private HttpEndpoint firsthttpEndpoint;
+    private ArrayList<WebRtcEndpoint> webrtc_eps;
+    private ArrayList<MediaPipeline> mediapls;
     
     private String sessionId;
+    
 
     @Override
     public synchronized void onContentRequest(WebRtcContentSession contentSession) throws Exception {
-
-        if (firstWebRtcEndpoint == null) {
+       
+        sessionId = contentSession.getSessionId();
+        contentSession.publishEvent(new ContentEvent("mediaevent",sessionId));
+        contentSession.publishEvent(new ContentEvent("mediaevent",""));
+        
+        if(webrtc_eps == null || webrtc_eps.size() == 1){
+            if(mediapls == null){
+                webrtc_eps = new ArrayList<WebRtcEndpoint>();
+                mediapls = new ArrayList<MediaPipeline>();
+            }
+            
             MediaPipeline mp = contentSession.getMediaPipelineFactory().create();
-            
-            WebRtcEndpoint endpoint = mp.newWebRtcEndpoint().build();
-            WebRTCParticipant participant = new WebRTCParticipant(Integer.toString(SelectableRoomHandler.globalId
-                            .incrementAndGet()), name, endpoint, session);
-            participant.endpoint.connect(participant.endpoint);
-            session.start(participant.endpoint);
-            session.setAttribute("participant", participant);
-            participants.put(participant.getId(), participant);
-            notifyJoined(participant);
-            
             contentSession.releaseOnTerminate(mp);
-            firstWebRtcEndpoint = mp.newWebRtcEndpoint().build();
-            sessionId = contentSession.getSessionId();
-            contentSession.releaseOnTerminate(firstWebRtcEndpoint);
-            firstWebRtcEndpoint.connect(firstWebRtcEndpoint);
-            contentSession.start(firstWebRtcEndpoint);
+            mediapls.add(mp);
             
-            contentSession.publishEvent(new ContentEvent("event","Bienvenido, usuario."));
-	} else {
-            MediaPipeline mp = firstWebRtcEndpoint.getMediaPipeline();
+            WebRtcEndpoint we = mp.newWebRtcEndpoint().build();            
+            contentSession.releaseOnTerminate(we);
+            we.connect(we);
+            contentSession.start(we);
+            webrtc_eps.add(we);
+                        
+            
+        }else{
+            MediaPipeline mp = webrtc_eps.get(0).getMediaPipeline();
             WebRtcEndpoint newWebRtcEndpoint = mp.newWebRtcEndpoint().build();
             contentSession.releaseOnTerminate(newWebRtcEndpoint);
-            firstWebRtcEndpoint.connect(newWebRtcEndpoint);
-            newWebRtcEndpoint.connect(firstWebRtcEndpoint);
+            webrtc_eps.get(0).connect(newWebRtcEndpoint);
             contentSession.start(newWebRtcEndpoint);
-            contentSession.publishEvent(new ContentEvent("event","Un nuevo usuario se ha conectado!"));
+            
+            contentSession.publishEvent(new ContentEvent("mediaevent",""+webrtc_eps.size()));
+            contentSession.publishEvent(new ContentEvent("mediaevent",""+mediapls.size()));
         }
     }
 
@@ -105,9 +90,31 @@ public class multiUserStreaming extends WebRtcContentHandler {
     @Override
     public void onSessionTerminated(WebRtcContentSession contentSession,int code, String reason) throws Exception {
         if (contentSession.getSessionId().equals(sessionId)) {
-            getLogger().info("Terminating first WebRTC session");
-            firstWebRtcEndpoint = null;
+            for(WebRtcEndpoint we: webrtc_eps){
+                we = null;
+            }
         }
         super.onSessionTerminated(contentSession, code, reason);
     }
+    
+    public boolean isConnected(WebRtcEndpoint we){
+        List<MediaSink> msnk = we.getMediaSinks();
+        for(MediaSink ms : msnk){
+            MediaSource tmpmsrc = ms.getConnectedSrc();
+            if(tmpmsrc != null) return true;
+        }
+        return false;
+    }
+    
+    public String processIp(String description){
+        int index = description.indexOf("raddr");
+        index+=6;
+        String ip = "";
+        while(description.charAt(index) != ' '){
+            ip = ip + description.charAt(index);
+            index++;
+        }
+        return ip;
+    }
+    
 }
