@@ -22,7 +22,11 @@ import com.kurento.kmf.media.MediaSink;
 import com.kurento.kmf.media.MediaSource;
 import com.kurento.kmf.media.WebRtcEndpoint;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
 
 
 /**
@@ -40,8 +44,7 @@ import java.util.List;
 @WebRtcContentService(path = "/multiUserStreaming/*")
 public class multiUserStreaming extends WebRtcContentHandler {
 
-    private ArrayList<WebRtcEndpoint> webrtc_eps;
-    private ArrayList<MediaPipeline> mediapls;
+    private HashMap<String,WebRtcEndpoint> hosts;
     
     private String sessionId;
     
@@ -50,35 +53,32 @@ public class multiUserStreaming extends WebRtcContentHandler {
     public synchronized void onContentRequest(WebRtcContentSession contentSession) throws Exception {
        
         sessionId = contentSession.getSessionId();
-        contentSession.publishEvent(new ContentEvent("mediaevent",sessionId));
-        contentSession.publishEvent(new ContentEvent("mediaevent",""));
+        HttpServletRequest http = contentSession.getHttpServletRequest();
         
-        if(webrtc_eps == null || webrtc_eps.size() == 1){
-            if(mediapls == null){
-                webrtc_eps = new ArrayList<WebRtcEndpoint>();
-                mediapls = new ArrayList<MediaPipeline>();
-            }
-            
+        if(hosts == null) hosts = new HashMap<String,WebRtcEndpoint>();
+        
+        String remoteSession = http.getSession().getId();
+        contentSession.publishEvent(new ContentEvent("mediaevent","Esta es la IP del visitante: " + http.getRemoteAddr()));
+        contentSession.publishEvent(new ContentEvent("mediaevent","Esta es la sesion: " + remoteSession));
+        
+        if(hosts.containsKey(remoteSession)){
+            if(hosts.size() != 1) remoteSession = getDifferentSession(remoteSession);
+            WebRtcEndpoint we = (WebRtcEndpoint) hosts.get(remoteSession);
+            MediaPipeline mp = we.getMediaPipeline();
+            WebRtcEndpoint newWebRtcEndpoint = mp.newWebRtcEndpoint().build();
+            contentSession.releaseOnTerminate(newWebRtcEndpoint);
+            we.connect(newWebRtcEndpoint);
+            contentSession.start(newWebRtcEndpoint);
+        }else{
             MediaPipeline mp = contentSession.getMediaPipelineFactory().create();
             contentSession.releaseOnTerminate(mp);
-            mediapls.add(mp);
-            
             WebRtcEndpoint we = mp.newWebRtcEndpoint().build();            
             contentSession.releaseOnTerminate(we);
             we.connect(we);
             contentSession.start(we);
-            webrtc_eps.add(we);
-                        
+            hosts.put(remoteSession, we);
             
-        }else{
-            MediaPipeline mp = webrtc_eps.get(0).getMediaPipeline();
-            WebRtcEndpoint newWebRtcEndpoint = mp.newWebRtcEndpoint().build();
-            contentSession.releaseOnTerminate(newWebRtcEndpoint);
-            webrtc_eps.get(0).connect(newWebRtcEndpoint);
-            contentSession.start(newWebRtcEndpoint);
-            
-            contentSession.publishEvent(new ContentEvent("mediaevent",""+webrtc_eps.size()));
-            contentSession.publishEvent(new ContentEvent("mediaevent",""+mediapls.size()));
+            contentSession.publishEvent(new ContentEvent("mediaevent","Tamaño de hosts: " + hosts.size()));
         }
     }
 
@@ -90,9 +90,7 @@ public class multiUserStreaming extends WebRtcContentHandler {
     @Override
     public void onSessionTerminated(WebRtcContentSession contentSession,int code, String reason) throws Exception {
         if (contentSession.getSessionId().equals(sessionId)) {
-            for(WebRtcEndpoint we: webrtc_eps){
-                we = null;
-            }
+            hosts.clear();
         }
         super.onSessionTerminated(contentSession, code, reason);
     }
@@ -106,15 +104,15 @@ public class multiUserStreaming extends WebRtcContentHandler {
         return false;
     }
     
-    public String processIp(String description){
-        int index = description.indexOf("raddr");
-        index+=6;
-        String ip = "";
-        while(description.charAt(index) != ' '){
-            ip = ip + description.charAt(index);
-            index++;
+    public String getDifferentSession(String value){
+        String newSession = "";
+        for (Map.Entry pairs : hosts.entrySet()) {
+            if(!value.equals(pairs.getKey())){
+                newSession = (String) pairs.getKey();
+                break;
+            }
+            newSession = value;
         }
-        return ip;
+        return newSession;
     }
-    
 }

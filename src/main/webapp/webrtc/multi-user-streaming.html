@@ -13,6 +13,7 @@
             var conn, conn_2;
             var urls = new Array();
             var handler;
+            var controller = true;
 
             window.onload = function() {
                 console = new Console("console", console);
@@ -58,38 +59,41 @@
                 });
             }
 
-            function remoteConn(){
-                var twoRemote = document.getElementById("twoRemote");
-                twoRemote.style.background = "white center url('../img/spinner.gif') no-repeat";
-                twoRemote.style.width ="25%"
-                var option = { remoteVideoTag: "twoRemote" };
-                try {
-                    conn_2 = new kwsContentApi.KwsWebRtcContent(handler, option);
-                    initConnection(conn_2);
-                }
-                catch(error) {
-                    console.error(error.message);
-                }
-            }
-
-            function selfConn() {
-                var oneLocal = document.getElementById("oneLocal");		
-                oneLocal.style.background = "white center url('../img/spinner.gif') no-repeat";
-                oneLocal.style.width ="50%"
-                var oneRemote = document.getElementById("oneRemote");
-                oneRemote.style.background = "white center url('../img/spinner.gif') no-repeat";
-                oneRemote.style.width ="25%"
-                handler = "../multiUserStreaming"
-                var options = {
-                    localVideoTag: "oneLocal",
-                    remoteVideoTag: "oneRemote"
-                };
-                try {
-                    conn = new kwsContentApi.KwsWebRtcContent(handler, options);
-                    initConnection(conn);
-                }
-                catch(error) {
-                    console.error(error.message);
+            function start() {
+                if(controller){
+                    var oneLocal = document.getElementById("oneLocal");		
+                    oneLocal.style.background = "white center url('../img/spinner.gif') no-repeat";
+                    oneLocal.style.width ="50%"
+                    var oneRemote = document.getElementById("oneRemote");
+                    oneRemote.style.background = "white center url('../img/spinner.gif') no-repeat";
+                    oneRemote.style.width ="25%"
+                    handler = "../multiUserStreaming"
+                    var options = {
+                        localVideoTag: "oneLocal",
+                        remoteVideoTag: "oneRemote"
+                    };
+                    try {
+                        conn = new kwsContentApi.KwsWebRtcContent(handler, options);
+                        initConnection(conn);
+                        controller = false;
+                        $("#start").html("New Connection");
+                    }
+                    catch(error) {
+                        console.error(error.message);
+                    }
+                }else{
+                    var twoRemote = document.getElementById("twoRemote");
+                    twoRemote.style.background = "white center url('../img/spinner.gif') no-repeat";
+                    twoRemote.style.width ="25%"
+                    var option = { remoteVideoTag: "twoRemote" };
+                    try {
+                        conn_2 = new kwsContentApi.KwsWebRtcContent(handler, option);
+                        initConnection(conn_2);
+                        $("#start").prop('disabled', true);
+                    }
+                    catch(error) {
+                        console.error(error.message);
+                    }
                 }
             }
         </script>
@@ -103,8 +107,7 @@
                     <video id="oneRemote" autoplay controls></video>
                     <video id="twoRemote" autoplay controls></video>
                 </div>
-                <button id="selfConn" onclick="selfConn()">Start</button>
-                <button id="remoteConn" onclick="remoteConn()">Start</button>
+                <button id="start" onclick="start()">Start</button>
                 <button id="terminate" onclick="terminate()">Terminate</button>
             </article>
         </section>
