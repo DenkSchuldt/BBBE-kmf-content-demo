@@ -18,37 +18,25 @@ import com.kurento.kmf.content.WebRtcContentHandler;
 import com.kurento.kmf.content.WebRtcContentService;
 import com.kurento.kmf.content.WebRtcContentSession;
 import com.kurento.kmf.media.MediaPipeline;
-import com.kurento.kmf.media.MediaSink;
-import com.kurento.kmf.media.MediaSource;
 import com.kurento.kmf.media.WebRtcEndpoint;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 
 /**
- * This handler implements a one to many video conference using WebRtcEnpoints;
- * the first session acts as "master", and the rest of concurrent sessions will
- * watch the "master" session in his remote stream; master's remote is a
- * loopback at the beginning, and it is changing with the stream of the each
- * participant in the conference.
+ * This handler implements a video conference for two users using WebRtcEnpoints,
+ * each user has his own MediaPipeline and then in a new connection, each user will
+ * watch the remote stream of the other.
  * 
- * @author Boni Garcia (bgarcia@gsyc.es)
- * @since 3.0.7
- * 
- * @Modified by Denny K. Schuldt
+ * @author Denny K. Schuldt
  */
-@WebRtcContentService(path = "/multiUserStreaming/*")
-public class multiUserStreaming extends WebRtcContentHandler {
+@WebRtcContentService(path = "/twoUsersStreaming/*")
+public class TwoUsersStreaming extends WebRtcContentHandler {
 
     private HashMap<String,WebRtcEndpoint> hosts;
-    
     private String sessionId;
     
-
     @Override
     public synchronized void onContentRequest(WebRtcContentSession contentSession) throws Exception {
        
@@ -77,8 +65,6 @@ public class multiUserStreaming extends WebRtcContentHandler {
             we.connect(we);
             contentSession.start(we);
             hosts.put(remoteSession, we);
-            
-            contentSession.publishEvent(new ContentEvent("mediaevent","Tamaño de hosts: " + hosts.size()));
         }
     }
 
@@ -91,17 +77,9 @@ public class multiUserStreaming extends WebRtcContentHandler {
     public void onSessionTerminated(WebRtcContentSession contentSession,int code, String reason) throws Exception {
         if (contentSession.getSessionId().equals(sessionId)) {
             hosts.clear();
+            hosts = null;
         }
         super.onSessionTerminated(contentSession, code, reason);
-    }
-    
-    public boolean isConnected(WebRtcEndpoint we){
-        List<MediaSink> msnk = we.getMediaSinks();
-        for(MediaSink ms : msnk){
-            MediaSource tmpmsrc = ms.getConnectedSrc();
-            if(tmpmsrc != null) return true;
-        }
-        return false;
     }
     
     public String getDifferentSession(String value){

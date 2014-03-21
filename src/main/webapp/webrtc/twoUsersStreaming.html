@@ -66,8 +66,8 @@
                     oneLocal.style.width ="50%"
                     var oneRemote = document.getElementById("oneRemote");
                     oneRemote.style.background = "white center url('../img/spinner.gif') no-repeat";
-                    oneRemote.style.width ="25%"
-                    handler = "../multiUserStreaming"
+                    oneRemote.style.width ="300px"
+                    handler = "../twoUsersStreaming"
                     var options = {
                         localVideoTag: "oneLocal",
                         remoteVideoTag: "oneRemote"
@@ -84,7 +84,7 @@
                 }else{
                     var twoRemote = document.getElementById("twoRemote");
                     twoRemote.style.background = "white center url('../img/spinner.gif') no-repeat";
-                    twoRemote.style.width ="25%"
+                    twoRemote.style.width ="300px"
                     var option = { remoteVideoTag: "twoRemote" };
                     try {
                         conn_2 = new kwsContentApi.KwsWebRtcContent(handler, option);
