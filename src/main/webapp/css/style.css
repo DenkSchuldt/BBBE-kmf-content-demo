@@ -31,7 +31,6 @@ section{
     margin-bottom: 0;
     background-color: rgba(80,80,80,0.4); 
     font-size: 2em;
-    padding-top: 10px;
     padding-bottom: 10px;
 }
 .streaming-section{text-align: center}
@@ -105,7 +104,7 @@ footer{margin-bottom: 0}
     display: block;
     margin-left: 25%;
     border: 2px solid black;
-    background-color: white;
+    background-color: black;
 }
 #videos{
     margin-top: 30px;
@@ -122,6 +121,74 @@ footer{margin-bottom: 0}
     border-radius: 150px;
     margin: 2%;
     border: 2px solid black;
-    background-color: white;
+    background-color: black;
 }
 #videos video:hover{cursor:pointer}
+
+#user-name{
+    width: 100%;
+    display: block;
+    background-color: rgb(150,150,150);
+    vertical-align: middle;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    text-align: left;
+}
+#user-name label{ padding-left: 40px }
+#user-name input{
+    width: 15%;
+    height: 40px;
+    font-size: 30px;
+    vertical-align: middle;
+}
+#user-name button{
+    width: 80px;
+    height: 80px;
+    vertical-align: middle;
+}
+
+.multi-local{
+    width: 50%;
+    display: inline-block;
+    margin-left: 5%;
+    background-color: black;
+    vertical-align: top;
+}
+#new-streams{
+    width: 25%;
+    display: inline-block;
+    border-radius: 5px;
+    background-color: rgba(255,255,255,0.7);
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+#new-stream{
+    vertical-align: middle
+}
+#new-stream label{ font-size: 0.8em }
+#ok,#notOk{
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+    display: inline-block;
+    vertical-align: middle;
+    cursor: pointer;
+}
+#ok{
+    background-color: #16a085;
+    border-bottom: 2px solid #14947b;
+    -webkit-box-shadow: inset 0 -2px #14947b;
+    box-shadow: inset 0 -2px #14947b
+}
+#notOk{
+    background-color: rgb(255,94,94);
+    border-bottom: 2px solid rgb(255,62,62);
+    -webkit-box-shadow: inset 0 -2px rgb(255,62,62);
+    box-shadow: inset 0 -2px rgb(255,62,62);
+}
+#ok:active, #notOk:active{
+    top: 1px;
+    outline: none;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+}
