@@ -27,26 +27,29 @@ import com.kurento.kmf.media.WebRtcEndpoint;
  */
 public class WebRTCParticipant {
 
-	private String id;
-	private String name;
+    private String name;
+    private String id;
 
-	public final transient WebRtcEndpoint endpoint;
-	public final transient WebRtcContentSession session;
+    public final transient WebRtcEndpoint endpoint;
+    public final transient WebRtcContentSession contentSession;
 
-	public WebRTCParticipant(String id, String name, WebRtcEndpoint endpoint,
-			WebRtcContentSession session) {
-		this.name = name;
-		this.id = id;
-		this.endpoint = endpoint;
-		this.session = session;
-	}
+    public WebRTCParticipant(String name, String httpid, WebRtcEndpoint endpoint, WebRtcContentSession session) {
+        this.name = name;
+        this.id = httpid;
+        this.endpoint = endpoint;
+        this.contentSession = session;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public String getId() {
-		return id;
-	}
-
+    public String getId() {
+        return id;
+    }
+    
+    @Override
+    public String toString() {
+        return"{\"name\":\""+this.name+"\",\"id\":\""+this.id+"\"}";
+    }
 }

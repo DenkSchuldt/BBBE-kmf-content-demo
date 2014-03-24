@@ -3,164 +3,12 @@
     <head>
         <meta charset="utf-8">
         <title>Multi User streaming Demo</title>
-        <script src="../lib/kws-content-api.js"></script>
-        <link rel="stylesheet" type="text/css" href="../css/style.css"/>
+        <script src="../js/kws-content-api.js"></script>
         <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+        <link rel="stylesheet" type="text/css" href="../css/style.css"/>
         <script src="../lib/adapter.js"></script>
         <script src="../lib/Console.js"></script>
-        <script>
-            
-            var conn, conn_2;
-            var urls = new Array();
-            var handler;
-            var idController = 1;
-            
-            var Command = {
-                GET_PARTICIPANTS : "getParticipants",
-                SELECT : "selectParticipant",
-                CONNECT : "connectParticipant",
-            };
-            
-            var Event = {
-                ON_JOINED : "onJoined",
-                ON_UNJOINED : "onUnjoined",
-            };
-
-            window.onload = function() {
-                console = new Console("console", console);
-            };
-
-            function terminate() {
-                conn.terminate();
-                location.reload();
-            }
-
-            function initConnection(conn) {
-                console.log("Creating connection to " + handler);
-                conn.on("start", function(event){});
-                conn.on("terminate", function(event){});
-                conn.on("localstream", function(event) {
-                    console.log("--------LOCAL SET!---------\n\n");
-                });
-                conn.on("remotestream", function(event) {
-                    $("#videos video").click(function(){
-                        var src1 = $("#oneLocal").attr("src");
-                        var src2 = $(this).attr("src");
-                        $("#oneLocal").attr("src",src2);
-                        $(this).attr("src",src1);
-                    });
-                    console.log("--------REMOTE SET!---------\n\n");
-                });
-                conn.on("mediaevent", function(event) {
-                    var participant_data = JSON.parse(event.data);
-                    if(Event.ON_JOINED == event.type){
-			onJoined(participant_data);
-                    }else if(Event.ON_UNJOINED == event.type){
-			var participant_data = JSON.parse(event.data);
-			onUnjoined(participant_data);
-                    }else{
-                        console.info("MediaEvent: " + Jparticipant_data);
-                    }
-                });
-                conn.on("error", function(error) {
-                    console.error(error.message);
-                });
-            }
-
-            function start() {
-                var name = $("#name").val();
-                if(!name){
-                    alert("You must specify your name.");
-                    return;
-                }
-                $("#videos video")[0].attr("id",name);
-                $("#start").attr("disabled","disabled");
-                
-                var local = $("local");
-                $(local).css("background","black center url('../img/spinner.gif') no-repeat");
-                $(local).css("width","50%");
-                
-                var remote = $("#videos video")[0];
-                $(remote).css("background","black center url('../img/spinner.gif') no-repeat");
-                $(remote).css("width","300px");
-                
-                handler = "../manyToMany"
-                var options = {
-                    localVideoTag: "local",
-                    remoteVideoTag: name
-                };
-                try {
-                    conn = new kwsContentApi.KwsWebRtcContent(handler, options);
-                    initConnection(conn);
-                }
-                catch(error) {
-                    console.error(error.message);
-                }
-            }
-            
-            function newVideo(name){
-                var remote = document.createElement("video");
-                $(remote).attr('autoplay','');
-                $(remote).attr('controls','');
-                $(remote).attr('id',name);
-                $(remote).css("background","black center url('../img/spinner.gif') no-repeat");
-                $(remote).css("width","300px");
-                document.getElementById("videos").appendChild(remote);
-            }
-            
-            function newParticipant(name){
-                var div = $("div");
-                $(div).attr("id","new-stream");
-                var label = $("label");
-                label.html(name);
-                var ok = $("div");
-                $(ok).attr("id","ok");
-                $(ok).click(acceptParticipant(name));
-                $(ok).html('<i class="fa fa-check"></i>');
-                var notOk = $("div");
-                $(notOk).attr("id","notOk");
-                $(notOk).click(rejectParticipant());
-                $(notOk).html('<i class="fa fa-times"></i>');
-            }
-            
-            function acceptParticipant(name){
-                newVideo(name);
-                $(this).parent().remove();
-            }
-            
-            function rejectParticipant(){
-                //Eliminar conexión
-                $(this).parent().remove();
-            }
-            
-            function onJoined(participant) {
-                /*conn.execute(Command.GET_PARTICIPANTS,"", function(error, result) {
-                    removeAllParticipants('orig');
-                    removeAllParticipants('dest');
-
-                    // Remove all buttons and add new ones
-                    removeAllButtons();
-                    participantsList = JSON.parse(result);
-                    participantsList.forEach(function(item) {
-                        addParticipant(item, 'orig');
-                        addParticipant(item, 'dest');
-                        addButton(item);
-                    });
-                });*/
-            }
-            
-            function onUnjoined(participant){
-                /*console.info(participant.name + " has gone");
-                removeParticipant(participant, 'orig');
-                removeParticipant(participant, 'dest');
-                var e = document.getElementById(participant.id);
-                e.parentElement.removeChild(e);
-                if(participant.id == connected){
-                    connected = null;
-                }*/
-            }
-            
-        </script>
+        <script src="../lib/many_to_many.js"></script>
     </head>
     <body>
         <header class="header"><a href="../index.html" style="text-decoration: none; color: white;"><i class="fa fa-arrow-circle-o-left"></i> Multi User Streaming</a></header>
@@ -173,6 +21,7 @@
             </div>
             <article class="streaming-article">
                 <div id="new-streams">
+                    <p>Available streamings:</p>
                 </div>
                 <video class="multi-local" id="local" autoplay controls></video>
                 <div id="videos">

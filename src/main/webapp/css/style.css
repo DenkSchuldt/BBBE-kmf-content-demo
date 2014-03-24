@@ -117,8 +117,6 @@ footer{margin-bottom: 0}
 #videos video{
     display: inline-block;
     width: 300px;
-    height: 300px;
-    border-radius: 150px;
     margin: 2%;
     border: 2px solid black;
     background-color: black;
@@ -138,7 +136,7 @@ footer{margin-bottom: 0}
 #user-name input{
     width: 15%;
     height: 40px;
-    font-size: 30px;
+    font-size: 20px;
     vertical-align: middle;
 }
 #user-name button{
@@ -153,6 +151,7 @@ footer{margin-bottom: 0}
     margin-left: 5%;
     background-color: black;
     vertical-align: top;
+    border: 2px solid black;
 }
 #new-streams{
     width: 25%;
@@ -162,17 +161,21 @@ footer{margin-bottom: 0}
     padding-top: 10px;
     padding-bottom: 10px;
 }
-#new-stream{
-    vertical-align: middle
+#new-streams p{
+    font-size:0.5em;
+    margin-right:10px;
 }
-#new-stream label{ font-size: 0.8em }
+#new-streams #new-stream{vertical-align: middle}
 #ok,#notOk{
-    width: 40px;
-    height: 40px;
-    border-radius: 20px;
+    width: 34px;
+    height: 34px;
+    border-radius: 17px;
     display: inline-block;
     vertical-align: middle;
     cursor: pointer;
+    margin-left: 5px;
+    margin-right: 5px;
+    font-size: 0.8em
 }
 #ok{
     background-color: #16a085;
