@@ -114,14 +114,19 @@ footer{margin-bottom: 0}
     background-color: rgb(150,150,150);
     text-align: center;
 }
-#videos video{
+#videos video, #left{
     display: inline-block;
     width: 300px;
     margin: 2%;
     border: 2px solid black;
     background-color: black;
+    color: white;
+    vertical-align: middle;
 }
 #videos video:hover{cursor:pointer}
+#left{
+    display: none;
+}
 
 #user-name{
     width: 100%;

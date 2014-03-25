@@ -14,26 +14,18 @@
  */
 package com.kurento.demo.webrtc;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-import com.kurento.kmf.content.ContentCommand;
-import com.kurento.kmf.content.ContentCommandResult;
 import com.kurento.kmf.content.ContentEvent;
 import com.kurento.kmf.content.WebRtcContentHandler;
 import com.kurento.kmf.content.WebRtcContentService;
 import com.kurento.kmf.content.WebRtcContentSession;
 import com.kurento.kmf.media.MediaPipeline;
 import com.kurento.kmf.media.WebRtcEndpoint;
-import static java.lang.reflect.Modifier.TRANSIENT;
-import java.lang.reflect.Type;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * This handler implements a video conference for two users using
+ * This handler implements a video conference for many users using
  * WebRtcEnpoints, each user has his own MediaPipeline and then in a new
  * connection, each user will watch the remote stream of the other.
  *
@@ -42,20 +34,15 @@ import javax.servlet.http.HttpServletRequest;
 @WebRtcContentService(path = "/manyToMany/*")
 public class ManyToMany extends WebRtcContentHandler {
     
-    public static final String COMMAND_GET_PARTICIPANTS = "getParticipants";
-    public static final String COMMAND_SELECT = "selectParticipant";
-    public static final String COMMAND_CONNECT = "connectParticipant";
     public static final String EVENT_ON_JOINED = "onJoined";
     public static final String EVENT_ON_UNJOINED = "onUnjoined";
 
     private Map<String, WebRTCParticipant> participants;
-    private String sessionId, httpid;
-    private static final Gson gson = new GsonBuilder().excludeFieldsWithModifiers(TRANSIENT).create();
+    private String httpid;
 
     @Override
     public synchronized void onContentRequest(WebRtcContentSession contentSession) throws Exception {
 
-        sessionId = contentSession.getSessionId();
         HttpServletRequest http = contentSession.getHttpServletRequest();
         synchronized (this) {
             if (participants == null) {
@@ -92,63 +79,37 @@ public class ManyToMany extends WebRtcContentHandler {
             contentSession.releaseOnTerminate(participant.endpoint);
             participant.endpoint.connect(participant.endpoint);
             contentSession.start(participant.endpoint);
-            contentSession.setAttribute("participant", participant);
             participants.put(remoteSession,participant);
+            getUsersBroadcasting(participant);
             notifyJoined(participant);
         }
     }
 
-    /*@Override
-    public ContentCommandResult onContentCommand(WebRtcContentSession session,ContentCommand command) throws Exception {
-        String cmdType = command.getType();
-        String cmdData = command.getData();
-        getLogger().info("onContentCommand: ({}, {})", cmdType, cmdData);
-        if (COMMAND_GET_PARTICIPANTS.equalsIgnoreCase(cmdType)) {
-            String json = gson.toJson(participants.values());
-            return new ContentCommandResult(json);
-        } else if (COMMAND_SELECT.equalsIgnoreCase(cmdType)) {
-            return new ContentCommandResult(Boolean.toString(selectParticipant(session, cmdData)));
-        } else if (COMMAND_CONNECT.equalsIgnoreCase(cmdType)) {
-            Type listType = new TypeToken<List<String>>(){}.getType();
-            List<String> idList = gson.fromJson(cmdData, listType);
-            if (idList.size() != 2) {
-                return new ContentCommandResult(Boolean.FALSE.toString());
-            }
-            return new ContentCommandResult(Boolean.toString(connectParticipant(idList.get(0),idList.get(1))));
-        }
-        return super.onContentCommand(session, command);
-    }*/
-    
-    @Override
-    public void onContentStarted(WebRtcContentSession contentSession){}
-
     @Override
     public void onSessionTerminated(WebRtcContentSession contentSession,int code, String reason) throws Exception {
-        if (contentSession.getSessionId().equals(sessionId)) {
+        WebRTCParticipant participant = null;
+        for (WebRTCParticipant p : participants.values()) {
+            if (p.contentSession.equals(contentSession)) {
+                participant = (WebRTCParticipant) participants.get(p.getId());
+                break;
+            }
+        }
+        notifyUnjoined(participant);
+        if (participants.isEmpty()) {
             participants.clear();
-            participants = null;
         }
         super.onSessionTerminated(contentSession, code, reason);
     }
     
-    private void notifyJoined(WebRTCParticipant participant){
+    public void getUsersBroadcasting(WebRTCParticipant participant){        
         for (WebRTCParticipant p : participants.values()) {
-            if(!p.getId().equals(httpid))
-                p.contentSession.publishEvent(new ContentEvent(EVENT_ON_JOINED,participant.toString()));
+            if (!p.getName().equalsIgnoreCase(participant.getName())) {
+                participant.contentSession.publishEvent(new ContentEvent(EVENT_ON_JOINED,p.toString()));
+            }
         }
-    }
-
-    private boolean selectParticipant(WebRtcContentSession session,String partId) {
-        WebRTCParticipant partSelected = participants.get(partId);
-        if (partSelected == null) {
-            getLogger().error("Participant {} does not exist", partId);
-            return false;
-        }
-        partSelected.endpoint.connect(((WebRTCParticipant) session.getAttribute("participant")).endpoint);
-        return true;
     }
     
-    private boolean exists(final String user) {
+    public boolean userExists(final String user) {
         for (WebRTCParticipant p : participants.values()) {
             if (p.getName().equalsIgnoreCase(user)) {
                 return true;
@@ -157,38 +118,18 @@ public class ManyToMany extends WebRtcContentHandler {
         return false;
     }
 
-    public String getDifferentSession(String value) {
-        String newSession = "";
-        for (Map.Entry pairs : participants.entrySet()) {
-            if (!value.equals(pairs.getKey())) {
-                newSession = (String) pairs.getKey();
-                break;
-            }
-            newSession = value;
+    private void notifyJoined(WebRTCParticipant participant){
+        for (WebRTCParticipant p : participants.values()) {
+            if(!p.getId().equals(httpid))
+                p.contentSession.publishEvent(new ContentEvent(EVENT_ON_JOINED,participant.toString()));
         }
-        return newSession;
     }
     
-    private boolean connectParticipant(String origId, String destId) {
-        WebRTCParticipant orig = participants.get(origId);
-        if(orig == null){
-            getLogger().error("Participant {} does not exist", origId);
-            return false;
-        }
-        WebRTCParticipant dest = participants.get(destId);
-        if(dest == null){
-            getLogger().error("Participant {} does not exist", destId);
-            return false;
-        }
-        orig.endpoint.connect(dest.endpoint);
-        return true;
-    }
-
     private void notifyUnjoined(WebRTCParticipant participant) {
-        String json = gson.toJson(participant);
-        getLogger().info("Participant unjoined: {}", json);
         for (WebRTCParticipant p : participants.values()) {
-            p.contentSession.publishEvent(new ContentEvent(EVENT_ON_UNJOINED, json));
+            if(!p.getName().equals(participant.getName()))
+                p.contentSession.publishEvent(new ContentEvent(EVENT_ON_UNJOINED, participant.toString()));
         }
+        participants.remove(participant.getId());
     }
 }
