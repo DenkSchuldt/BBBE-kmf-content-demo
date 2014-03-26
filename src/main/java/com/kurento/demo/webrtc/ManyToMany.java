@@ -63,6 +63,7 @@ public class ManyToMany extends WebRtcContentHandler {
             for (WebRTCParticipant p : participants.values()) {
                 if(p.getName().equals(user)){
                     MediaPipeline mp = p.endpoint.getMediaPipeline();
+                    contentSession.releaseOnTerminate(mp);
                     WebRtcEndpoint newWebRtcEndpoint = mp.newWebRtcEndpoint().build();
                     contentSession.releaseOnTerminate(newWebRtcEndpoint);
                     p.endpoint.connect(newWebRtcEndpoint);
@@ -77,7 +78,6 @@ public class ManyToMany extends WebRtcContentHandler {
             WebRtcEndpoint we = mp.newWebRtcEndpoint().build();
             WebRTCParticipant participant = new WebRTCParticipant(user,remoteSession,we,contentSession);
             contentSession.releaseOnTerminate(participant.endpoint);
-            participant.endpoint.connect(participant.endpoint);
             contentSession.start(participant.endpoint);
             participants.put(remoteSession,participant);
             getUsersBroadcasting(participant);

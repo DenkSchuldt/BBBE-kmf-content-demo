@@ -48,7 +48,7 @@ function initConnection(conn) {
             var participant_data = jQuery.parseJSON(event.data);
             onUnjoined(participant_data.name);
         }else{
-            console.info("MediaEvent: " + participant_data);
+            console.info("MediaEvent: " + event.data);
         }
     });
     conn.on("error", function(error) {
@@ -64,21 +64,18 @@ function start() {
     }
     name = checkName(name);
     if(!name) name = "user";
-    $($("#videos video")[0]).attr("id",name);
     $("#start").attr("disabled","disabled");
     var local = $("#local");
     $(local).css("background","white center url('../img/spinner.gif') no-repeat");
-    $(local).css("width","50%");
-    var remote = $("#videos video")[0];
-    $(remote).css("background","white center url('../img/spinner.gif') no-repeat");
-    $(remote).css("width","300px");
+    $(local).css("width","300px");
     handler = "../manyToMany/" + name;
-    var options = {
+    var remote_options = {
         localVideoTag: "local",
-        remoteVideoTag: name
+        audio: "sendonly",
+	video: "sendonly"
     };
     try {
-        conn = new kwsContentApi.KwsWebRtcContent(handler, options);
+        conn = new kwsContentApi.KwsWebRtcContent(handler,remote_options);
         initConnection(conn);
     }
     catch(error) {
@@ -99,17 +96,11 @@ function checkName(name){
 
 function newVideoTag(name){
     var remote = document.createElement("video");
-    $(remote).attr('autoplay','');
     $(remote).attr('controls','');
+    $(remote).attr('autoplay','');
     $(remote).attr('id',name);
     $(remote).css("background","white center url('../img/spinner.gif') no-repeat");
     $(remote).css("width","300px");
-    $(remote).click(function(){
-        var src1 = $("#local").attr("src");
-        var src2 = $(this).attr("src");
-        $("#local").attr("src",src2);
-        $(this).attr("src",src1);
-    });
     $("#videos").append(remote);
 }
 
@@ -141,7 +132,11 @@ function newNotification(name){
 function acceptBroadcast(name){
     newVideoTag(name);
     var broadcast = "../manyToMany/" + name;
-    var option = { remoteVideoTag: name };
+    var option = { 
+        remoteVideoTag: name,
+        audio: "recvonly",
+	video: "recvonly"
+    };
     try {
         var connection = new kwsContentApi.KwsWebRtcContent(broadcast, option);
         initConnection(connection);
@@ -155,7 +150,9 @@ function acceptBroadcast(name){
 }
 
 function rejectBroadcast(name){
-    $("#new-stream-"+name).remove('slow'); 
+    $("#new-stream-"+name).hide('slow', function(){ 
+        $("#new-stream-"+name).remove(); 
+    });
 }
 
 function onJoined(participant) {
