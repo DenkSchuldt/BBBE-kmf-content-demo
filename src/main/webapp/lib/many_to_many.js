@@ -1,4 +1,4 @@
-var conn, conn_2;
+var conn;
 var urls = new Array();
 var handler;
 var idController = 1;
@@ -69,13 +69,13 @@ function start() {
     $(local).css("background","white center url('../img/spinner.gif') no-repeat");
     $(local).css("width","300px");
     handler = "../manyToMany/" + name;
-    var remote_options = {
+    var producer = {
         localVideoTag: "local",
         audio: "sendonly",
 	video: "sendonly"
     };
     try {
-        conn = new kwsContentApi.KwsWebRtcContent(handler,remote_options);
+        conn = new kwsContentApi.KwsWebRtcContent(handler,producer);
         initConnection(conn);
     }
     catch(error) {
