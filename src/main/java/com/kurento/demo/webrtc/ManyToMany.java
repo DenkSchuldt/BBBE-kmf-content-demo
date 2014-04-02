@@ -10,8 +10,8 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
- *
  */
+
 package com.kurento.demo.webrtc;
 
 import com.kurento.kmf.content.ContentEvent;
@@ -19,6 +19,8 @@ import com.kurento.kmf.content.WebRtcContentHandler;
 import com.kurento.kmf.content.WebRtcContentService;
 import com.kurento.kmf.content.WebRtcContentSession;
 import com.kurento.kmf.media.MediaPipeline;
+import com.kurento.kmf.media.MediaProfileSpecType;
+import com.kurento.kmf.media.RecorderEndpoint;
 import com.kurento.kmf.media.WebRtcEndpoint;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,9 +38,11 @@ public class ManyToMany extends WebRtcContentHandler {
     
     public static final String EVENT_ON_JOINED = "onJoined";
     public static final String EVENT_ON_UNJOINED = "onUnjoined";
+    
+    public static final String TARGET = "file:///tmp/webrtc";
 
     private Map<String, WebRTCParticipant> participants;
-    private String httpid;
+    private String http_session_id;
 
     @Override
     public synchronized void onContentRequest(WebRtcContentSession contentSession) throws Exception {
@@ -50,51 +54,71 @@ public class ManyToMany extends WebRtcContentHandler {
             }
         }
        
-        String user = contentSession.getContentId();
-        if(user == null || user.isEmpty()){
-            user = "null";
+        String user_name = contentSession.getContentId();
+        if(user_name == null || user_name.isEmpty()){
+            user_name = "no_name";
         }
         /*if(exists(user)){
             contentSession.terminate(403,"");
         }*/
-        String remoteSession = http.getSession().getId();
+        String remote_session = http.getSession().getId();
 
-        if(participants.containsKey(remoteSession)){
+        if(participants.containsKey(remote_session)){
             for (WebRTCParticipant p : participants.values()) {
-                if(p.getName().equals(user)){
-                    MediaPipeline mp = p.endpoint.getMediaPipeline();
+                if(p.getUserName().equals(user_name)){
+                    MediaPipeline mp = p.webrtcEndpoint.getMediaPipeline();
                     contentSession.releaseOnTerminate(mp);
                     WebRtcEndpoint newWebRtcEndpoint = mp.newWebRtcEndpoint().build();
                     contentSession.releaseOnTerminate(newWebRtcEndpoint);
-                    p.endpoint.connect(newWebRtcEndpoint);
+                    p.webrtcEndpoint.connect(newWebRtcEndpoint);
                     contentSession.start(newWebRtcEndpoint);
                     break;
                 }
             }
         }else{
-            httpid = remoteSession;
+            http_session_id = remote_session;
             MediaPipeline mp = contentSession.getMediaPipelineFactory().create();
             contentSession.releaseOnTerminate(mp);
-            WebRtcEndpoint we = mp.newWebRtcEndpoint().build();
-            WebRTCParticipant participant = new WebRTCParticipant(user,remoteSession,we,contentSession);
-            contentSession.releaseOnTerminate(participant.endpoint);
-            contentSession.start(participant.endpoint);
-            participants.put(remoteSession,participant);
+            // Recording format
+            MediaProfileSpecType mediaProfileSpecType = MediaProfileSpecType.WEBM;
+            // Endpoint
+            WebRtcEndpoint webRtcEndpoint = mp.newWebRtcEndpoint().build();
+            RecorderEndpoint recorderEndPoint = mp.newRecorderEndpoint(TARGET).withMediaProfile(mediaProfileSpecType).build();
+            // Participant
+            WebRTCParticipant participant = new WebRTCParticipant(user_name,http_session_id,contentSession,webRtcEndpoint,recorderEndPoint);
+            participant.webrtcEndpoint.connect(participant.recorderEndpoint);
+            contentSession.start(participant.webrtcEndpoint);
+            participants.put(http_session_id,participant);
             getUsersBroadcasting(participant);
             notifyJoined(participant);
         }
     }
 
     @Override
+    public void onContentStarted(WebRtcContentSession contentSession) {
+        for (WebRTCParticipant p : participants.values()) {
+            if (p.contentSession.equals(contentSession)) {
+                p.recorderEndpoint.record();
+                contentSession.publishEvent(new ContentEvent("event","This is the Uri: " + p.recorderEndpoint.getUri()));
+                break;
+            }
+        }
+    }
+    
+    @Override
     public void onSessionTerminated(WebRtcContentSession contentSession,int code, String reason) throws Exception {
         WebRTCParticipant participant = null;
         for (WebRTCParticipant p : participants.values()) {
             if (p.contentSession.equals(contentSession)) {
-                participant = (WebRTCParticipant) participants.get(p.getId());
+                participant = (WebRTCParticipant) participants.get(p.getHttpSessionId());
                 break;
             }
         }
         notifyUnjoined(participant);
+        participant.webrtcEndpoint.release();
+        participant.recorderEndpoint.stop();
+        participant.recorderEndpoint.release();
+        participants.remove(participant.getHttpSessionId());
         if (participants.isEmpty()) {
             participants.clear();
         }
@@ -103,7 +127,7 @@ public class ManyToMany extends WebRtcContentHandler {
     
     public void getUsersBroadcasting(WebRTCParticipant participant){        
         for (WebRTCParticipant p : participants.values()) {
-            if (!p.getName().equalsIgnoreCase(participant.getName())) {
+            if (!p.getUserName().equalsIgnoreCase(participant.getUserName())) {
                 participant.contentSession.publishEvent(new ContentEvent(EVENT_ON_JOINED,p.toString()));
             }
         }
@@ -111,7 +135,7 @@ public class ManyToMany extends WebRtcContentHandler {
     
     public boolean userExists(final String user) {
         for (WebRTCParticipant p : participants.values()) {
-            if (p.getName().equalsIgnoreCase(user)) {
+            if (p.getUserName().equalsIgnoreCase(user)) {
                 return true;
             }
         }
@@ -120,16 +144,15 @@ public class ManyToMany extends WebRtcContentHandler {
 
     private void notifyJoined(WebRTCParticipant participant){
         for (WebRTCParticipant p : participants.values()) {
-            if(!p.getId().equals(httpid))
+            if(!p.getHttpSessionId().equals(http_session_id))
                 p.contentSession.publishEvent(new ContentEvent(EVENT_ON_JOINED,participant.toString()));
         }
     }
     
     private void notifyUnjoined(WebRTCParticipant participant) {
         for (WebRTCParticipant p : participants.values()) {
-            if(!p.getName().equals(participant.getName()))
+            if(!p.getUserName().equals(participant.getUserName()))
                 p.contentSession.publishEvent(new ContentEvent(EVENT_ON_UNJOINED, participant.toString()));
         }
-        participants.remove(participant.getId());
     }
 }

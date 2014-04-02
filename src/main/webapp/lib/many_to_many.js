@@ -13,6 +13,22 @@ window.onload = function() {
     console = new Console("console", console);
 };
 
+function player(){
+    $("#player").fadeIn('slow');
+    $("#player").click(function(){
+       window.location.href = '/player_detail?username=' + name;;
+    });
+    
+    /*function test(){    
+        var v = new  XMLWriter();
+        v.writeStartDocument(true);
+        v.writeElementString('test','Hello World');
+        v.writeAttributeString('foo','bar');
+        v.writeEndDocument();
+        console.log( v.flush() );
+    }*/
+}
+
 function terminate() {
     if (conn == null) {
         alert("Connection is not established");

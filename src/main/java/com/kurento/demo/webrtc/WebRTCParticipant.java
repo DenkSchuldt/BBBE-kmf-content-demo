@@ -15,6 +15,7 @@
 package com.kurento.demo.webrtc;
 
 import com.kurento.kmf.content.WebRtcContentSession;
+import com.kurento.kmf.media.RecorderEndpoint;
 import com.kurento.kmf.media.WebRtcEndpoint;
 
 /**
@@ -27,29 +28,31 @@ import com.kurento.kmf.media.WebRtcEndpoint;
  */
 public class WebRTCParticipant {
 
-    private String name;
-    private String id;
-
-    public final transient WebRtcEndpoint endpoint;
+    private String user_name;
+    private String http_session_id;
+    
     public final transient WebRtcContentSession contentSession;
+    public final transient WebRtcEndpoint webrtcEndpoint;
+    public final transient RecorderEndpoint recorderEndpoint;
 
-    public WebRTCParticipant(String name, String httpid, WebRtcEndpoint endpoint, WebRtcContentSession session) {
-        this.name = name;
-        this.id = httpid;
-        this.endpoint = endpoint;
-        this.contentSession = session;
+    public WebRTCParticipant(String user_name, String http_session_id, WebRtcContentSession contentSession, WebRtcEndpoint webrtcEndpoint, RecorderEndpoint recorderEndpoint) {
+        this.user_name = user_name;
+        this.http_session_id = http_session_id;
+        this.contentSession = contentSession;
+        this.webrtcEndpoint = webrtcEndpoint;
+        this.recorderEndpoint = recorderEndpoint;
     }
 
-    public String getName() {
-        return name;
+    public String getUserName() {
+        return this.user_name;
     }
 
-    public String getId() {
-        return id;
+    public String getHttpSessionId() {
+        return this.http_session_id;
     }
     
     @Override
     public String toString() {
-        return"{\"name\":\""+this.name+"\",\"id\":\""+this.id+"\"}";
+        return"{\"name\":\""+this.user_name+"\",\"id\":\""+this.http_session_id+"\"}";
     }
 }
