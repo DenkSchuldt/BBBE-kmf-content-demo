@@ -39,7 +39,7 @@ public class ManyToMany extends WebRtcContentHandler {
     public static final String EVENT_ON_JOINED = "onJoined";
     public static final String EVENT_ON_UNJOINED = "onUnjoined";
     
-    public static final String TARGET = "file:///tmp/webrtc";
+    public static String TARGET = "file:///tmp/";
 
     private Map<String, WebRTCParticipant> participants;
     private String http_session_id;
@@ -80,17 +80,20 @@ public class ManyToMany extends WebRtcContentHandler {
             MediaPipeline mp = contentSession.getMediaPipelineFactory().create();
             contentSession.releaseOnTerminate(mp);
             // Recording format
-            MediaProfileSpecType mediaProfileSpecType = MediaProfileSpecType.WEBM;
+            MediaProfileSpecType mediaProfileSpecType = MediaProfileSpecType.WEBM; // WEBM
+            TARGET = TARGET + user_name + ".webm"; // mp4
             // Endpoint
             WebRtcEndpoint webRtcEndpoint = mp.newWebRtcEndpoint().build();
             RecorderEndpoint recorderEndPoint = mp.newRecorderEndpoint(TARGET).withMediaProfile(mediaProfileSpecType).build();
+            TARGET = "file:///tmp/";
             // Participant
             WebRTCParticipant participant = new WebRTCParticipant(user_name,http_session_id,contentSession,webRtcEndpoint,recorderEndPoint);
             participant.webrtcEndpoint.connect(participant.recorderEndpoint);
-            contentSession.start(participant.webrtcEndpoint);
             participants.put(http_session_id,participant);
             getUsersBroadcasting(participant);
             notifyJoined(participant);
+            contentSession.start(participant.webrtcEndpoint);
+            participant.recorderEndpoint.record();
         }
     }
 
@@ -118,19 +121,12 @@ public class ManyToMany extends WebRtcContentHandler {
         participant.webrtcEndpoint.release();
         participant.recorderEndpoint.stop();
         participant.recorderEndpoint.release();
+        participant.contentSession.terminate(200,"No error");
         participants.remove(participant.getHttpSessionId());
         if (participants.isEmpty()) {
             participants.clear();
         }
         super.onSessionTerminated(contentSession, code, reason);
-    }
-    
-    public void getUsersBroadcasting(WebRTCParticipant participant){        
-        for (WebRTCParticipant p : participants.values()) {
-            if (!p.getUserName().equalsIgnoreCase(participant.getUserName())) {
-                participant.contentSession.publishEvent(new ContentEvent(EVENT_ON_JOINED,p.toString()));
-            }
-        }
     }
     
     public boolean userExists(final String user) {
@@ -142,6 +138,14 @@ public class ManyToMany extends WebRtcContentHandler {
         return false;
     }
 
+    public void getUsersBroadcasting(WebRTCParticipant participant){        
+        for (WebRTCParticipant p : participants.values()) {
+            if (!p.getUserName().equalsIgnoreCase(participant.getUserName())) {
+                participant.contentSession.publishEvent(new ContentEvent(EVENT_ON_JOINED,p.toString()));
+            }
+        }
+    }
+    
     private void notifyJoined(WebRTCParticipant participant){
         for (WebRTCParticipant p : participants.values()) {
             if(!p.getHttpSessionId().equals(http_session_id))

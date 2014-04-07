@@ -14,19 +14,10 @@ window.onload = function() {
 };
 
 function player(){
-    $("#player").fadeIn('slow');
     $("#player").click(function(){
-       window.location.href = '/player_detail?username=' + name;;
+        var path = '../webrtc/player.html?name=' + name;
+        window.location.href = path;
     });
-    
-    /*function test(){    
-        var v = new  XMLWriter();
-        v.writeStartDocument(true);
-        v.writeElementString('test','Hello World');
-        v.writeAttributeString('foo','bar');
-        v.writeEndDocument();
-        console.log( v.flush() );
-    }*/
 }
 
 function terminate() {
@@ -34,17 +25,17 @@ function terminate() {
         alert("Connection is not established");
         return false;
     }
+    $("#player").fadeIn('slow');
     $("#"+name).removeAttr("src");
     $("#terminate").attr("disabled","disabled");
     $("#start").removeAttr("disabled");
     conn.terminate();
 }
 
-function initConnection(conn) {
+function initConnection(conn,handler) {
     console.log("Creating connection to " + handler);
     conn.on("start", function(event){});
     conn.on("terminate", function(event){
-        alert("Connection has been terminated");
         $($("#local")).css("background","black");
         $("#"+name).css("background","black");
         conn = null;
@@ -57,7 +48,6 @@ function initConnection(conn) {
     });
     conn.on("mediaevent", function(event) {
         if(Event.ON_JOINED === event.type){
-            console.log(event.data);
             var participant_data = jQuery.parseJSON(event.data);
             onJoined(participant_data.name);
         }else if(Event.ON_UNJOINED === event.type){
@@ -80,19 +70,21 @@ function start() {
     }
     name = checkName(name);
     if(!name) name = "user";
+    player(name);
     $("#start").attr("disabled","disabled");
-    var local = $("#local");
+    var local = $(".multi-local");
     $(local).css("background","white center url('../img/spinner.gif') no-repeat");
     $(local).css("width","300px");
+    $(local).attr("id",name);
     handler = "../manyToMany/" + name;
     var producer = {
-        localVideoTag: "local",
+        localVideoTag: name,
         audio: "sendonly",
 	video: "sendonly"
     };
     try {
         conn = new kwsContentApi.KwsWebRtcContent(handler,producer);
-        initConnection(conn);
+        initConnection(conn,handler);
     }
     catch(error) {
         console.error(error.message);
@@ -139,7 +131,7 @@ function newNotification(name){
     $(reject).html('<i class="fa fa-times"></i>');
     reject.name = name;
     $(reject).click(function(){
-        rejectBroadcast(this.name);
+        hideNotification(this.name);
     });
     $(div).append(reject);
     $("#new-streams").append(div);
@@ -155,17 +147,15 @@ function acceptBroadcast(name){
     };
     try {
         var connection = new kwsContentApi.KwsWebRtcContent(broadcast, option);
-        initConnection(connection);
+        initConnection(connection,broadcast);
     }
     catch(error) {
         console.error(error.message);
     }
-    $("#new-stream-"+name).hide('slow', function(){ 
-        $("#new-stream-"+name).remove(); 
-    });
+    hideNotification(name);
 }
 
-function rejectBroadcast(name){
+function hideNotification(name){
     $("#new-stream-"+name).hide('slow', function(){ 
         $("#new-stream-"+name).remove(); 
     });
