@@ -76,7 +76,7 @@ function start() {
     $(local).css("background","white center url('../img/spinner.gif') no-repeat");
     $(local).css("width","300px");
     $(local).attr("id",name);
-    handler = "../manyToMany/" + name;
+    handler = "../webRtcInput/" + name;
     var producer = {
         localVideoTag: name,
         audio: "sendonly",
@@ -139,7 +139,7 @@ function newNotification(name){
 
 function acceptBroadcast(name){
     newVideoTag(name);
-    var broadcast = "../manyToMany/" + name;
+    var broadcast = "../httpOutput/" + name;
     var option = { 
         remoteVideoTag: name,
         audio: "recvonly",

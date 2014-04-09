@@ -15,9 +15,13 @@
 package com.kurento.demo.webrtc;
 
 import com.kurento.kmf.content.ContentEvent;
+import com.kurento.kmf.content.HttpPlayerHandler;
+import com.kurento.kmf.content.HttpPlayerService;
+import com.kurento.kmf.content.HttpPlayerSession;
 import com.kurento.kmf.content.WebRtcContentHandler;
 import com.kurento.kmf.content.WebRtcContentService;
 import com.kurento.kmf.content.WebRtcContentSession;
+import com.kurento.kmf.media.HttpGetEndpoint;
 import com.kurento.kmf.media.MediaPipeline;
 import com.kurento.kmf.media.MediaProfileSpecType;
 import com.kurento.kmf.media.RecorderEndpoint;
@@ -33,68 +37,49 @@ import javax.servlet.http.HttpServletRequest;
  *
  * @author Denny K. Schuldt
  */
-@WebRtcContentService(path = "/manyToMany/*")
-public class ManyToMany extends WebRtcContentHandler {
+@WebRtcContentService(path = "/webRtcInput/*")
+public class WebRtcInput extends WebRtcContentHandler {
     
     public static final String EVENT_ON_JOINED = "onJoined";
     public static final String EVENT_ON_UNJOINED = "onUnjoined";
-    
-    public static String TARGET = "file:///tmp/";
+    public static String TARGET = "";
 
-    private Map<String, WebRTCParticipant> participants;
+    public Map<String, WebRTCParticipant> participants;
     private String http_session_id;
+    private MediaPipeline mp;
 
     @Override
     public synchronized void onContentRequest(WebRtcContentSession contentSession) throws Exception {
-
+        
         HttpServletRequest http = contentSession.getHttpServletRequest();
-        synchronized (this) {
-            if (participants == null) {
-                participants = new ConcurrentHashMap<String, WebRTCParticipant>();
-            }
+        
+        if (mp == null) {
+            participants = new ConcurrentHashMap<String, WebRTCParticipant>();
+            mp = contentSession.getMediaPipelineFactory().create();
+            contentSession.releaseOnTerminate(mp);
         }
        
         String user_name = contentSession.getContentId();
         if(user_name == null || user_name.isEmpty()){
-            user_name = "no_name";
+            user_name = contentSession.getSessionId();
         }
-        /*if(exists(user)){
-            contentSession.terminate(403,"");
-        }*/
-        String remote_session = http.getSession().getId();
 
-        if(participants.containsKey(remote_session)){
-            for (WebRTCParticipant p : participants.values()) {
-                if(p.getUserName().equals(user_name)){
-                    MediaPipeline mp = p.webrtcEndpoint.getMediaPipeline();
-                    contentSession.releaseOnTerminate(mp);
-                    WebRtcEndpoint newWebRtcEndpoint = mp.newWebRtcEndpoint().build();
-                    contentSession.releaseOnTerminate(newWebRtcEndpoint);
-                    p.webrtcEndpoint.connect(newWebRtcEndpoint);
-                    contentSession.start(newWebRtcEndpoint);
-                    break;
-                }
-            }
-        }else{
-            http_session_id = remote_session;
-            MediaPipeline mp = contentSession.getMediaPipelineFactory().create();
-            contentSession.releaseOnTerminate(mp);
-            // Recording format
-            MediaProfileSpecType mediaProfileSpecType = MediaProfileSpecType.WEBM; // WEBM
-            TARGET = TARGET + user_name + ".webm"; // mp4
-            // Endpoint
-            WebRtcEndpoint webRtcEndpoint = mp.newWebRtcEndpoint().build();
-            RecorderEndpoint recorderEndPoint = mp.newRecorderEndpoint(TARGET).withMediaProfile(mediaProfileSpecType).build();
-            TARGET = "file:///tmp/";
-            // Participant
-            WebRTCParticipant participant = new WebRTCParticipant(user_name,http_session_id,contentSession,webRtcEndpoint,recorderEndPoint);
-            participant.webrtcEndpoint.connect(participant.recorderEndpoint);
-            participants.put(http_session_id,participant);
-            getUsersBroadcasting(participant);
-            notifyJoined(participant);
-            contentSession.start(participant.webrtcEndpoint);
-            participant.recorderEndpoint.record();
-        }
+        http_session_id = http.getSession().getId();
+        // Recording format
+        MediaProfileSpecType mediaProfileSpecType = MediaProfileSpecType.WEBM; // mp4
+        TARGET = "file:///tmp/" + user_name + ".webm"; // mp4
+        // Endpoint
+        WebRtcEndpoint webRtcEndpoint = mp.newWebRtcEndpoint().build();
+        RecorderEndpoint recorderEndPoint = mp.newRecorderEndpoint(TARGET).withMediaProfile(mediaProfileSpecType).build();
+        // Participant
+        WebRTCParticipant participant = new WebRTCParticipant(user_name,http_session_id,contentSession,webRtcEndpoint,recorderEndPoint);
+        participant.webrtcEndpoint.connect(participant.recorderEndpoint);
+        getUsersBroadcasting(participant);
+        notifyJoined(participant);
+        participants.put(http_session_id,participant);
+
+        contentSession.start(participant.webrtcEndpoint);
+        participant.recorderEndpoint.record();
     }
 
     @Override
@@ -102,7 +87,6 @@ public class ManyToMany extends WebRtcContentHandler {
         for (WebRTCParticipant p : participants.values()) {
             if (p.contentSession.equals(contentSession)) {
                 p.recorderEndpoint.record();
-                contentSession.publishEvent(new ContentEvent("event","This is the Uri: " + p.recorderEndpoint.getUri()));
                 break;
             }
         }
@@ -157,6 +141,26 @@ public class ManyToMany extends WebRtcContentHandler {
         for (WebRTCParticipant p : participants.values()) {
             if(!p.getUserName().equals(participant.getUserName()))
                 p.contentSession.publishEvent(new ContentEvent(EVENT_ON_UNJOINED, participant.toString()));
+        }
+    }
+    
+     /*------------------------------------------------------------------------------------------------*
+     *-------------------------------------------------------------------------------------------------*
+     *------------------------------------------------------------------------------------------------*/
+    
+    @HttpPlayerService(path = "/httpOutput/*")
+    public class HttpOutput extends HttpPlayerHandler{
+        @Override
+        public void onContentRequest(HttpPlayerSession contentSession) throws Exception {
+            for (WebRTCParticipant p : participants.values()){
+                if(p.getUserName().equals(contentSession.getContentId())){
+                    MediaPipeline newmp = p.webrtcEndpoint.getMediaPipeline();
+                    HttpGetEndpoint httpEndpoint = newmp.newHttpGetEndpoint().terminateOnEOS().build();
+                    p.webrtcEndpoint.connect(httpEndpoint);
+                    contentSession.start(httpEndpoint);
+                    break;
+                }
+            }
         }
     }
 }
