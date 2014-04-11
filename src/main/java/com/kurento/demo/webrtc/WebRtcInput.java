@@ -44,10 +44,10 @@ public class WebRtcInput extends WebRtcContentHandler {
     public static final String EVENT_ON_UNJOINED = "onUnjoined";
     public static String TARGET = "";
 
-    public Map<String, WebRTCParticipant> participants;
+    public static Map<String, WebRTCParticipant> participants;
     private String http_session_id;
-    private MediaPipeline mp;
-
+    private MediaPipeline mp;    
+    
     @Override
     public synchronized void onContentRequest(WebRtcContentSession contentSession) throws Exception {
         
@@ -141,26 +141,6 @@ public class WebRtcInput extends WebRtcContentHandler {
         for (WebRTCParticipant p : participants.values()) {
             if(!p.getUserName().equals(participant.getUserName()))
                 p.contentSession.publishEvent(new ContentEvent(EVENT_ON_UNJOINED, participant.toString()));
-        }
-    }
-    
-     /*------------------------------------------------------------------------------------------------*
-     *-------------------------------------------------------------------------------------------------*
-     *------------------------------------------------------------------------------------------------*/
-    
-    @HttpPlayerService(path = "/httpOutput/*")
-    public class HttpOutput extends HttpPlayerHandler{
-        @Override
-        public void onContentRequest(HttpPlayerSession contentSession) throws Exception {
-            for (WebRTCParticipant p : participants.values()){
-                if(p.getUserName().equals(contentSession.getContentId())){
-                    MediaPipeline newmp = p.webrtcEndpoint.getMediaPipeline();
-                    HttpGetEndpoint httpEndpoint = newmp.newHttpGetEndpoint().terminateOnEOS().build();
-                    p.webrtcEndpoint.connect(httpEndpoint);
-                    contentSession.start(httpEndpoint);
-                    break;
-                }
-            }
         }
     }
 }

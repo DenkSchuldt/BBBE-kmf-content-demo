@@ -53,6 +53,6 @@ public class WebRTCParticipant {
     
     @Override
     public String toString() {
-        return"{\"name\":\""+this.user_name+"\",\"id\":\""+this.http_session_id+"\"}";
+        return "{\"name\":\""+this.user_name+"\",\"id\":\""+this.http_session_id+"\"}";
     }
 }

@@ -6,7 +6,8 @@ var name = "";
 
 var Event = {
     ON_JOINED : "onJoined",
-    ON_UNJOINED : "onUnjoined"
+    ON_UNJOINED : "onUnjoined",
+    ON_REMOTE : "onRemote"
 };
 
 window.onload = function() {
@@ -53,6 +54,10 @@ function initConnection(conn,handler) {
         }else if(Event.ON_UNJOINED === event.type){
             var participant_data = jQuery.parseJSON(event.data);
             onUnjoined(participant_data.name);
+        }else if(Event.ON_REMOTE === event.type){
+            console.log(event.data);
+            var data = jQuery.parseJSON(event.data);
+            console.log(data);
         }else{
             console.info("MediaEvent: " + event.data);
         }
@@ -103,13 +108,13 @@ function checkName(name){
 }
 
 function newVideoTag(name){
-    var remote = document.createElement("video");
-    $(remote).attr('controls','');
-    $(remote).attr('autoplay','');
-    $(remote).attr('id',name);
-    $(remote).css("background","white center url('../img/spinner.gif') no-repeat");
-    $(remote).css("width","300px");
-    $("#videos").append(remote);
+    var video = document.createElement("video");
+    $(video).attr('id',name);
+    $(video).css("background","white center url('../img/spinner.gif') no-repeat");
+    $(video).css("width","300px");
+    $(video).attr('type',"video/webm");
+    $(video).attr('autoplay',"");
+    $("#videos").append(video);
 }
 
 function newNotification(name){
@@ -146,7 +151,7 @@ function acceptBroadcast(name){
 	video: "recvonly"
     };
     try {
-        var connection = new kwsContentApi.KwsWebRtcContent(broadcast, option);
+        var connection = new kwsContentApi.KwsContentPlayer(broadcast, option);
         initConnection(connection,broadcast);
     }
     catch(error) {
