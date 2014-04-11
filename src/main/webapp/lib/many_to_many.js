@@ -49,15 +49,15 @@ function initConnection(conn,handler) {
     });
     conn.on("mediaevent", function(event) {
         if(Event.ON_JOINED === event.type){
+            console.log("Joined: " + event.data);
             var participant_data = jQuery.parseJSON(event.data);
             onJoined(participant_data.name);
         }else if(Event.ON_UNJOINED === event.type){
+            console.log("Unjoined: " + event.data);
             var participant_data = jQuery.parseJSON(event.data);
             onUnjoined(participant_data.name);
         }else if(Event.ON_REMOTE === event.type){
-            console.log(event.data);
-            var data = jQuery.parseJSON(event.data);
-            console.log(data);
+            console.log("Remote: " + event.data);
         }else{
             console.info("MediaEvent: " + event.data);
         }
@@ -79,7 +79,6 @@ function start() {
     $("#start").attr("disabled","disabled");
     var local = $(".multi-local");
     $(local).css("background","white center url('../img/spinner.gif') no-repeat");
-    $(local).css("width","300px");
     $(local).attr("id",name);
     handler = "../webRtcInput/" + name;
     var producer = {
@@ -111,9 +110,8 @@ function newVideoTag(name){
     var video = document.createElement("video");
     $(video).attr('id',name);
     $(video).css("background","white center url('../img/spinner.gif') no-repeat");
-    $(video).css("width","300px");
-    $(video).attr('type',"video/webm");
-    $(video).attr('autoplay',"");
+    $(video).attr('autoplay','');
+    $(video).attr('controls','');
     $("#videos").append(video);
 }
 

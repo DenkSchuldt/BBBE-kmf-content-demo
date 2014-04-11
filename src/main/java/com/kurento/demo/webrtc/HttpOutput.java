@@ -10,6 +10,7 @@ import com.kurento.kmf.content.ContentEvent;
 import com.kurento.kmf.content.HttpPlayerHandler;
 import com.kurento.kmf.content.HttpPlayerService;
 import com.kurento.kmf.content.HttpPlayerSession;
+import com.kurento.kmf.media.HttpEndpoint;
 import com.kurento.kmf.media.HttpGetEndpoint;
 import com.kurento.kmf.media.MediaPipeline;
 import com.kurento.kmf.media.MediaProfileSpecType;
@@ -28,16 +29,11 @@ public class HttpOutput extends HttpPlayerHandler{
                 // Media Pipeline
                 MediaPipeline pipeline = p.webrtcEndpoint.getMediaPipeline();
                 // Media Elements
-                HttpGetEndpoint httpEndpoint = pipeline.newHttpGetEndpoint()
-                                                .withDisconnectionTimeout(1000)
-                                                .withMediaProfile(MediaProfileSpecType.WEBM).build();
+                HttpEndpoint httpEndpoint = pipeline.newHttpGetEndpoint().build();
                 // Connect
-                PlayerEndpoint playerEndpoint = pipeline.newPlayerEndpoint("file:///tmp/"+p.getUserName()+".webm").build();
-                playerEndpoint.connect(httpEndpoint);
+                p.webrtcEndpoint.connect(httpEndpoint);
                 // Start
                 contentSession.start(httpEndpoint);
-                contentSession.publishEvent(new ContentEvent("onRemote","{\"name\":\""+p.getUserName()+"\",\"url\":\""+httpEndpoint.getUrl()+"\"}"));
-                playerEndpoint.play();
                 break;
             }
         }
