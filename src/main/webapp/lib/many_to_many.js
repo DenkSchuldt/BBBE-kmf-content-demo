@@ -109,7 +109,7 @@ function checkName(name){
 function newVideoTag(name){
     var video = document.createElement("video");
     $(video).attr('id',name);
-    $(video).css("background","white center url('../img/spinner.gif') no-repeat");
+    
     $(video).attr('autoplay','');
     $(video).attr('controls','');
     $("#videos").append(video);

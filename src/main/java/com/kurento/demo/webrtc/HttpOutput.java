@@ -6,22 +6,19 @@
 
 package com.kurento.demo.webrtc;
 
-import com.kurento.kmf.content.ContentEvent;
 import com.kurento.kmf.content.HttpPlayerHandler;
 import com.kurento.kmf.content.HttpPlayerService;
 import com.kurento.kmf.content.HttpPlayerSession;
 import com.kurento.kmf.media.HttpEndpoint;
-import com.kurento.kmf.media.HttpGetEndpoint;
 import com.kurento.kmf.media.MediaPipeline;
-import com.kurento.kmf.media.MediaProfileSpecType;
-import com.kurento.kmf.media.PlayerEndpoint;
 
 /**
- *
- * @author kalel_000
+ * This handler allows a user to receive a shared streaming using a HttpEndpoint
+ * @author Denny K. Schuldt
  */
 @HttpPlayerService(path = "/httpOutput/*")
 public class HttpOutput extends HttpPlayerHandler{
+    
     @Override
     public void onContentRequest(HttpPlayerSession contentSession) throws Exception {
         for (WebRTCParticipant p : WebRtcInput.participants.values()){
@@ -37,9 +34,5 @@ public class HttpOutput extends HttpPlayerHandler{
                 break;
             }
         }
-    }
-
-    @Override
-    public void onContentStarted(HttpPlayerSession contentSession){
     }
 }

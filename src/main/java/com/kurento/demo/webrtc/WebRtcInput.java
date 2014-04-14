@@ -15,13 +15,9 @@
 package com.kurento.demo.webrtc;
 
 import com.kurento.kmf.content.ContentEvent;
-import com.kurento.kmf.content.HttpPlayerHandler;
-import com.kurento.kmf.content.HttpPlayerService;
-import com.kurento.kmf.content.HttpPlayerSession;
 import com.kurento.kmf.content.WebRtcContentHandler;
 import com.kurento.kmf.content.WebRtcContentService;
 import com.kurento.kmf.content.WebRtcContentSession;
-import com.kurento.kmf.media.HttpGetEndpoint;
 import com.kurento.kmf.media.MediaPipeline;
 import com.kurento.kmf.media.MediaProfileSpecType;
 import com.kurento.kmf.media.RecorderEndpoint;
@@ -31,10 +27,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * This handler implements a video conference for many users using
- * WebRtcEnpoints, each user has his own MediaPipeline and then in a new
- * connection, each user will watch the remote stream of the other.
- *
+ * This handler allows a user to share a stream using a WebRtcEndpoint,
+ * and record the stream in a WEBM file.
  * @author Denny K. Schuldt
  */
 @WebRtcContentService(path = "/webRtcInput/*")
@@ -52,7 +46,7 @@ public class WebRtcInput extends WebRtcContentHandler {
     public synchronized void onContentRequest(WebRtcContentSession contentSession) throws Exception {
         
         HttpServletRequest http = contentSession.getHttpServletRequest();
-        
+        // Media Pipeline
         if (mp == null) {
             participants = new ConcurrentHashMap<String, WebRTCParticipant>();
             mp = contentSession.getMediaPipelineFactory().create();
@@ -68,28 +62,19 @@ public class WebRtcInput extends WebRtcContentHandler {
         // Recording format
         MediaProfileSpecType mediaProfileSpecType = MediaProfileSpecType.WEBM; // mp4
         TARGET = "file:///tmp/" + user_name + ".webm"; // mp4
-        // Endpoint
+        // Media elements
         WebRtcEndpoint webRtcEndpoint = mp.newWebRtcEndpoint().build();
         RecorderEndpoint recorderEndPoint = mp.newRecorderEndpoint(TARGET).withMediaProfile(mediaProfileSpecType).build();
         // Participant
         WebRTCParticipant participant = new WebRTCParticipant(user_name,http_session_id,contentSession,webRtcEndpoint,recorderEndPoint);
+        // Connect
         participant.webrtcEndpoint.connect(participant.recorderEndpoint);
         getUsersBroadcasting(participant);
         notifyJoined(participant);
         participants.put(http_session_id,participant);
-
+        // Start
         contentSession.start(participant.webrtcEndpoint);
         participant.recorderEndpoint.record();
-    }
-
-    @Override
-    public void onContentStarted(WebRtcContentSession contentSession) {
-        for (WebRTCParticipant p : participants.values()) {
-            if (p.contentSession.equals(contentSession)) {
-                p.recorderEndpoint.record();
-                break;
-            }
-        }
     }
     
     @Override
@@ -113,6 +98,11 @@ public class WebRtcInput extends WebRtcContentHandler {
         super.onSessionTerminated(contentSession, code, reason);
     }
     
+    /**
+     * Get a notification for each existing producer
+     * @param  user the name of the current user
+     * @return true is the user name is already taken, or false if not.
+     */
     public boolean userExists(final String user) {
         for (WebRTCParticipant p : participants.values()) {
             if (p.getUserName().equalsIgnoreCase(user)) {
@@ -122,6 +112,10 @@ public class WebRtcInput extends WebRtcContentHandler {
         return false;
     }
 
+    /**
+     * Get a notification for each existing producer
+     * @param participant Producer who will receive the notifications
+     */
     public void getUsersBroadcasting(WebRTCParticipant participant){        
         for (WebRTCParticipant p : participants.values()) {
             if (!p.getUserName().equalsIgnoreCase(participant.getUserName())) {
@@ -130,6 +124,10 @@ public class WebRtcInput extends WebRtcContentHandler {
         }
     }
     
+    /**
+     * Notifies to all the clients that a participant has started broadcasting.
+     * @param participant Producer to which clients may be subscribed
+     */
     private void notifyJoined(WebRTCParticipant participant){
         for (WebRTCParticipant p : participants.values()) {
             if(!p.getHttpSessionId().equals(http_session_id))
@@ -137,6 +135,10 @@ public class WebRtcInput extends WebRtcContentHandler {
         }
     }
     
+    /**
+     * Notifies to all the clients that a participant has stoppped broadcasting.
+     * @param participant Producer to which clients are subscribed
+     */
     private void notifyUnjoined(WebRTCParticipant participant) {
         for (WebRTCParticipant p : participants.values()) {
             if(!p.getUserName().equals(participant.getUserName()))
