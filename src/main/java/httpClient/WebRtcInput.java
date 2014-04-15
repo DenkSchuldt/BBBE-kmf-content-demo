@@ -1,19 +1,7 @@
-/*
- * (C) Copyright 2014 Kurento (http://kurento.org/)
- *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser General Public License
- * (LGPL) version 2.1 which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl-2.1.html
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- */
 
-package com.kurento.demo.webrtc;
+package httpClient;
 
+import useful.WebRTCParticipant;
 import com.kurento.kmf.content.ContentEvent;
 import com.kurento.kmf.content.WebRtcContentHandler;
 import com.kurento.kmf.content.WebRtcContentService;
@@ -29,6 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * This handler allows a user to share a stream using a WebRtcEndpoint,
  * and record the stream in a WEBM file.
+ * 
  * @author Denny K. Schuldt
  */
 @WebRtcContentService(path = "/webRtcInput/*")
@@ -39,8 +28,8 @@ public class WebRtcInput extends WebRtcContentHandler {
     public static String TARGET = "";
 
     public static Map<String, WebRTCParticipant> participants;
+    public static MediaPipeline mp;
     private String http_session_id;
-    private MediaPipeline mp;    
     
     @Override
     public synchronized void onContentRequest(WebRtcContentSession contentSession) throws Exception {

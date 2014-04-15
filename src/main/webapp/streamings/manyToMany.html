@@ -2,16 +2,16 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>Multi User streaming Demo</title>
+        <title>Many to Many Streaming Demo</title>
         <script src="../js/kws-content-api.js"></script>
         <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
         <link rel="stylesheet" type="text/css" href="../css/style.css"/>
         <script src="../lib/adapter.js"></script>
         <script src="../lib/Console.js"></script>
-        <script src="../lib/many_to_many.js"></script>
+        <script src="../lib/manyToMany.js"></script>
     </head>
     <body>
-        <header class="header"><a href="../index.html" style="text-decoration: none; color: white;"><i class="fa fa-arrow-circle-o-left"></i> Multi User Streaming</a></header>
+        <header class="header"><a href="../index.html" style="text-decoration: none; color: white;"><i class="fa fa-arrow-circle-o-left"></i> Many to Many Streaming Demo</a></header>
         <section class="streaming-section">
             <div id="user-name">
                 <label>Name: </label> 
@@ -23,10 +23,10 @@
                 <div id="new-streams">
                     <p>Available streamings:</p>
                 </div>
-                <video class="multi-local" controls autoplay></video>
+                <video class="multi-local" id="local" controls autoplay></video>
                 <div id="videos">
                 </div>
-                <button id="player" onclick="player()">Play recorded session</button>
+                <button id="player">Play recorded session</button>
             </article>
         </section>
         <footer>BigBlueButton Ecuador 2014</footer>

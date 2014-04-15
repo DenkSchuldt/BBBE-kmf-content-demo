@@ -8,16 +8,30 @@ window.onload = function() {
     parameters = getUrlVars();
     name = parameters["name"];
     $(".multi-local").attr("id",name);
+    $('#terminate').click(function(){
+        
+    });
     handler = "../player/" + name;
     var player = { remoteVideoTag: name };
     try {
-        conn = new kwsContentApi.KwsWebRtcContent(handler,player);
+        conn = new kwsContentApi.KwsContentPlayer(handler,player);
         initConnection(conn);
     }
     catch(error) {
         console.error(error.message);
     }
 };
+
+function terminate(){
+    if (conn == null) {
+        alert("No connection to terminate.");
+        return false;
+    }
+    conn.terminate();
+    setTimeout(function(){
+        window.location="../manyToMany.html";
+    },2000);
+}
 
 function initConnection(conn) {
     console.log("Creating connection to " + handler);

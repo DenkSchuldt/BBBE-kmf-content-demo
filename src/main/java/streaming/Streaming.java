@@ -12,7 +12,7 @@
  * Lesser General Public License for more details.
  *
  */
-package com.kurento.demo.webrtc;
+package streaming;
 
 import com.kurento.kmf.content.WebRtcContentHandler;
 import com.kurento.kmf.content.WebRtcContentService;
@@ -30,7 +30,7 @@ import com.kurento.kmf.media.WebRtcEndpoint;
  * @author Boni Garcia (bgarcia@gsyc.es)
  * @since 3.0.7
  * 
- * @Modified by Denny K. Schuldt
+ * Modified by Denny K. Schuldt
  */
 @WebRtcContentService(path = "/streaming/*")
 public class Streaming extends WebRtcContentHandler {
@@ -56,12 +56,7 @@ public class Streaming extends WebRtcContentHandler {
             contentSession.start(newWebRtcEndpoint);
         }
     }
-
-    @Override
-    public void onContentStarted(WebRtcContentSession contentSession) {
-        //Empty
-    }
-
+    
     @Override
     public void onSessionTerminated(WebRtcContentSession contentSession,int code, String reason) throws Exception {
         if (contentSession.getSessionId().equals(sessionId)) {

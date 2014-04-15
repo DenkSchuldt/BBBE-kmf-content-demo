@@ -17,6 +17,10 @@
             }
 
             function terminate() {
+                if (conn == null) {
+                    alert("No connection to terminate.");
+                    return false;
+                }
                 conn.terminate();
                 location.reload();
             }
@@ -60,7 +64,7 @@
         </script>
     </head>
     <body>
-        <header class="header"><a href="../index.html" style="text-decoration: none; color: white;"><i class="fa fa-arrow-circle-o-left"></i> Streaming</a></header>
+        <header class="header"><a href="../index.html" style="text-decoration: none; color: white;"><i class="fa fa-arrow-circle-o-left"></i> Streaming Demo</a></header>
         <section class="streaming-section">
             <article class="streaming-article">
                 <video id="streaming-remoteVideo" autoplay controls></video>

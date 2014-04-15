@@ -12,19 +12,21 @@
  * Lesser General Public License for more details.
  *
  */
-package com.kurento.demo.webrtc;
+package useful;
 
 import com.kurento.kmf.content.WebRtcContentSession;
 import com.kurento.kmf.media.RecorderEndpoint;
 import com.kurento.kmf.media.WebRtcEndpoint;
 
 /**
- * Participant for selectable one to many WebRTC video conference room.
+ * Participant for a many to many,and a Http streaming demo.
  *
  * @author Miguel París Díaz (mparisdiaz@gmail.com)
  * @author Ivan Gracia (izanmail@gmail.com)
  * @author Boni Garcia (bgarcia@gsyc.es)
  * @since 4.0.1
+ * 
+ * Modified by Denny K. Schuldt
  */
 public class WebRTCParticipant {
 

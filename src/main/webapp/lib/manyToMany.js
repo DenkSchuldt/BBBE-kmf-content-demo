@@ -6,24 +6,23 @@ var name = "";
 
 var Event = {
     ON_JOINED : "onJoined",
-    ON_UNJOINED : "onUnjoined",
-    ON_REMOTE : "onRemote"
+    ON_UNJOINED : "onUnjoined"
 };
 
 window.onload = function() {
     console = new Console("console", console);
 };
 
-function player(){
+function player(name){
     $("#player").click(function(){
-        var path = '../webrtc/player.html?name=' + name;
+        var path = './player.html?name=' + name;
         window.location.href = path;
     });
 }
 
 function terminate() {
     if (conn == null) {
-        alert("Connection is not established");
+        alert("No connection to terminate.");
         return false;
     }
     $("#player").fadeIn('slow');
@@ -33,10 +32,11 @@ function terminate() {
     conn.terminate();
 }
 
-function initConnection(conn,handler) {
+function initConnection(conn) {
     console.log("Creating connection to " + handler);
     conn.on("start", function(event){});
     conn.on("terminate", function(event){
+        alert("Connection has been terminated");
         $($("#local")).css("background","black");
         $("#"+name).css("background","black");
         conn = null;
@@ -49,15 +49,12 @@ function initConnection(conn,handler) {
     });
     conn.on("mediaevent", function(event) {
         if(Event.ON_JOINED === event.type){
-            console.log("Joined: " + event.data);
+            console.log(event.data);
             var participant_data = jQuery.parseJSON(event.data);
             onJoined(participant_data.name);
         }else if(Event.ON_UNJOINED === event.type){
-            console.log("Unjoined: " + event.data);
             var participant_data = jQuery.parseJSON(event.data);
             onUnjoined(participant_data.name);
-        }else if(Event.ON_REMOTE === event.type){
-            console.log("Remote: " + event.data);
         }else{
             console.info("MediaEvent: " + event.data);
         }
@@ -77,18 +74,18 @@ function start() {
     if(!name) name = "user";
     player(name);
     $("#start").attr("disabled","disabled");
-    var local = $(".multi-local");
+    var local = $("#local");
     $(local).css("background","white center url('../img/spinner.gif') no-repeat");
-    $(local).attr("id",name);
-    handler = "../webRtcInput/" + name;
+    $(local).css("width","300px");
+    handler = "../manyToMany/" + name;
     var producer = {
-        localVideoTag: name,
+        localVideoTag: "local",
         audio: "sendonly",
 	video: "sendonly"
     };
     try {
         conn = new kwsContentApi.KwsWebRtcContent(handler,producer);
-        initConnection(conn,handler);
+        initConnection(conn);
     }
     catch(error) {
         console.error(error.message);
@@ -107,12 +104,13 @@ function checkName(name){
 }
 
 function newVideoTag(name){
-    var video = document.createElement("video");
-    $(video).attr('id',name);
-    
-    $(video).attr('autoplay','');
-    $(video).attr('controls','');
-    $("#videos").append(video);
+    var remote = document.createElement("video");
+    $(remote).attr('controls','');
+    $(remote).attr('autoplay','');
+    $(remote).attr('id',name);
+    $(remote).css("background","white center url('../img/spinner.gif') no-repeat");
+    $(remote).css("width","300px");
+    $("#videos").append(remote);
 }
 
 function newNotification(name){
@@ -134,7 +132,7 @@ function newNotification(name){
     $(reject).html('<i class="fa fa-times"></i>');
     reject.name = name;
     $(reject).click(function(){
-        hideNotification(this.name);
+        rejectBroadcast(this.name);
     });
     $(div).append(reject);
     $("#new-streams").append(div);
@@ -142,23 +140,25 @@ function newNotification(name){
 
 function acceptBroadcast(name){
     newVideoTag(name);
-    var broadcast = "../httpOutput/" + name;
+    var broadcast = "../manyToMany/" + name;
     var option = { 
         remoteVideoTag: name,
         audio: "recvonly",
 	video: "recvonly"
     };
     try {
-        var connection = new kwsContentApi.KwsContentPlayer(broadcast, option);
-        initConnection(connection,broadcast);
+        var connection = new kwsContentApi.KwsWebRtcContent(broadcast, option);
+        initConnection(connection);
     }
     catch(error) {
         console.error(error.message);
     }
-    hideNotification(name);
+    $("#new-stream-"+name).hide('slow', function(){ 
+        $("#new-stream-"+name).remove(); 
+    });
 }
 
-function hideNotification(name){
+function rejectBroadcast(name){
     $("#new-stream-"+name).hide('slow', function(){ 
         $("#new-stream-"+name).remove(); 
     });
@@ -185,4 +185,3 @@ function onUnjoined(participant){
         clearInterval(this);
     },6000);
 }
-

@@ -1,18 +1,6 @@
-/*
- * (C) Copyright 2014 Kurento (http://kurento.org/)
- *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the GNU Lesser General Public License
- * (LGPL) version 2.1 which accompanies this distribution, and is available at
- * http://www.gnu.org/licenses/lgpl-2.1.html
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- */
-package com.kurento.demo.webrtc;
+
+package bidirectional;
+
 import com.kurento.kmf.content.ContentEvent;
 import com.kurento.kmf.content.WebRtcContentHandler;
 import com.kurento.kmf.content.WebRtcContentService;
@@ -26,13 +14,13 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * This handler implements a video conference for two users using WebRtcEnpoints,
- * each user has his own MediaPipeline and then in a new connection, each user will
- * watch the remote stream of the other.
+ * each user has his own MediaPipeline and then in a new connection, the users will
+ * receive the remote stream of each other.
  * 
  * @author Denny K. Schuldt
  */
-@WebRtcContentService(path = "/twoUsersStreaming/*")
-public class TwoUsersStreaming extends WebRtcContentHandler {
+@WebRtcContentService(path = "/bidirectional/*")
+public class Bidirectional extends WebRtcContentHandler {
 
     private HashMap<String,WebRtcEndpoint> hosts;
     private String sessionId;
@@ -46,8 +34,8 @@ public class TwoUsersStreaming extends WebRtcContentHandler {
         if(hosts == null) hosts = new HashMap<String,WebRtcEndpoint>();
         
         String remoteSession = http.getSession().getId();
-        contentSession.publishEvent(new ContentEvent("mediaevent","Esta es la IP del visitante: " + http.getRemoteAddr()));
-        contentSession.publishEvent(new ContentEvent("mediaevent","Esta es la sesion: " + remoteSession));
+        contentSession.publishEvent(new ContentEvent("mediaevent","Remote Id: " + http.getRemoteAddr()));
+        contentSession.publishEvent(new ContentEvent("mediaevent","Local Id: " + remoteSession));
         
         if(hosts.containsKey(remoteSession)){
             if(hosts.size() != 1) remoteSession = getDifferentSession(remoteSession);
@@ -69,11 +57,6 @@ public class TwoUsersStreaming extends WebRtcContentHandler {
     }
 
     @Override
-    public void onContentStarted(WebRtcContentSession contentSession) {
-        //Empty
-    }
-
-    @Override
     public void onSessionTerminated(WebRtcContentSession contentSession,int code, String reason) throws Exception {
         if (contentSession.getSessionId().equals(sessionId)) {
             hosts.clear();
@@ -82,14 +65,19 @@ public class TwoUsersStreaming extends WebRtcContentHandler {
         super.onSessionTerminated(contentSession, code, reason);
     }
     
-    public String getDifferentSession(String value){
+    /**
+     * Get a different http session id.
+     * @param  session current http session id
+     * @return a different http session from the given one.
+     */
+    public String getDifferentSession(String session){
         String newSession = "";
         for (Map.Entry pairs : hosts.entrySet()) {
-            if(!value.equals(pairs.getKey())){
+            if(!session.equals(pairs.getKey())){
                 newSession = (String) pairs.getKey();
                 break;
             }
-            newSession = value;
+            newSession = session;
         }
         return newSession;
     }

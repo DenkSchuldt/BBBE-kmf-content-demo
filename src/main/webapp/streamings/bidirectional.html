@@ -2,8 +2,8 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>Multi User streaming Demo</title>
-        <script src="../lib/kws-content-api.js"></script>
+        <title>Bidirectional Streaming Demo</title>
+        <script src="../js/kws-content-api.js"></script>
         <link rel="stylesheet" type="text/css" href="../css/style.css"/>
         <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
         <script src="../lib/adapter.js"></script>
@@ -20,6 +20,10 @@
             };
 
             function terminate() {
+                if (conn == null) {
+                    alert("No connection to terminate.");
+                    return false;
+                }
                 conn.terminate();
                 location.reload();
             }
@@ -33,13 +37,6 @@
                 conn.on("localstream", function(event) {
                     console.info("\n\nLocalStream set");
                     console.log("--------LOCAL SET!---------\n\n");
-                    /*var remote = document.createElement("video");
-                    $(remote).attr('autoplay','');
-                    $(remote).attr('controls','');
-                    $(remote).css("background","white center url('../img/spinner.gif') no-repeat");
-                    $(remote).css("width","25%");
-                    $(remote).css("margin","2%");
-                    document.getElementById("videos").appendChild(remote);*/
                 });
                 conn.on("remotestream", function(event) {
                     console.info("\n\nRemoteStream set:");
@@ -67,10 +64,11 @@
                     var oneRemote = document.getElementById("oneRemote");
                     oneRemote.style.background = "white center url('../img/spinner.gif') no-repeat";
                     oneRemote.style.width ="300px"
-                    handler = "../twoUsersStreaming"
+                    handler = "../bidirectional"
                     var options = {
                         localVideoTag: "oneLocal",
-                        remoteVideoTag: "oneRemote"
+                        remoteVideoTag: "oneRemote",
+                        audio: "sendonly"
                     };
                     try {
                         conn = new kwsContentApi.KwsWebRtcContent(handler, options);
@@ -85,7 +83,11 @@
                     var twoRemote = document.getElementById("twoRemote");
                     twoRemote.style.background = "white center url('../img/spinner.gif') no-repeat";
                     twoRemote.style.width ="300px"
-                    var option = { remoteVideoTag: "twoRemote" };
+                    var option = { 
+                        remoteVideoTag: "twoRemote",
+                        audio: "recvonly",
+                        video: "recvonly"
+                    };
                     try {
                         conn_2 = new kwsContentApi.KwsWebRtcContent(handler, option);
                         initConnection(conn_2);
@@ -99,7 +101,7 @@
         </script>
     </head>
     <body>
-        <header class="header"><a href="../index.html" style="text-decoration: none; color: white;"><i class="fa fa-arrow-circle-o-left"></i> Multi User Streaming</a></header>
+        <header class="header"><a href="../index.html" style="text-decoration: none; color: white;"><i class="fa fa-arrow-circle-o-left"></i> Bidirectional Streaming Demo</a></header>
         <section class="streaming-section">
             <article class="streaming-article">
                 <video class="principal" id="oneLocal" autoplay controls></video>
