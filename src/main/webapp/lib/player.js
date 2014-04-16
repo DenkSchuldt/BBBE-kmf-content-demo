@@ -1,18 +1,20 @@
 
 var parameters = "",
     name = "",
+    flag,
     conn, handler;
 
 window.onload = function() {
     console = new Console("console", console);
     parameters = getUrlVars();
     name = parameters["name"];
+    flag = parameters["flag"];
     $(".multi-local").attr("id",name);
     $('#terminate').click(function(){
-        
+        terminate();
     });
     handler = "../player/" + name;
-    var player = { remoteVideoTag: name };
+    var player = { remoteVideoTag: 'self-video' };
     try {
         conn = new kwsContentApi.KwsContentPlayer(handler,player);
         initConnection(conn);
@@ -22,14 +24,18 @@ window.onload = function() {
     }
 };
 
+/**
+ * Called when the "Terminate" button is clicked.
+ */
 function terminate(){
-    if (conn == null) {
+    if (!conn) {
         alert("No connection to terminate.");
         return false;
     }
     conn.terminate();
     setTimeout(function(){
-        window.location="../manyToMany.html";
+        if(flag === '0') window.location="../manyToMany.html";
+        else if(flag === '1') window.location="../httpClient.html";
     },2000);
 }
 

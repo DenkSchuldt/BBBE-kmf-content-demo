@@ -1,8 +1,5 @@
-var conn;
-var urls = new Array();
-var handler;
-var idController = 1;
-var name = "";
+
+var conn, handler, name;
 
 var Event = {
     ON_JOINED : "onJoined",
@@ -14,24 +11,10 @@ window.onload = function() {
     console = new Console("console", console);
 };
 
-function terminate() {
-    if (conn == null) {
-        alert("No connection to terminate.");
-        return false;
-    }
-    $("#player").fadeIn('slow');
-    $("#"+name).removeAttr("src");
-    $("#terminate").attr("disabled","disabled");
-    $("#start").removeAttr("disabled");
-    conn.terminate();
-}
-
 function initConnection(conn,handler) {
     console.log("Creating connection to " + handler);
     conn.on("start", function(event){});
     conn.on("terminate", function(event){
-        $($("#local")).css("background","black");
-        $("#"+name).css("background","black");
         conn = null;
     });
     conn.on("localstream", function(event) {
@@ -45,6 +28,7 @@ function initConnection(conn,handler) {
             console.log("Joined: " + event.data);
             var participant_data = jQuery.parseJSON(event.data);
             onJoined(participant_data.name);
+            onJoined(participant_data.name, acceptBroadcast, hideNotification);
         }else if(Event.ON_UNJOINED === event.type){
             console.log("Unjoined: " + event.data);
             var participant_data = jQuery.parseJSON(event.data);
@@ -60,6 +44,9 @@ function initConnection(conn,handler) {
     });
 }
 
+/**
+ * Called when the "Start" button is clicked.
+ */
 function start() {
     name = $("#name").val();
     if(!name){
@@ -68,10 +55,11 @@ function start() {
     }
     name = checkName(name);
     if(!name) name = "user";
+    player(name,1);
     $("#start").attr("disabled","disabled");
-    var local = $(".multi-local");
-    $(local).css("background","white center url('../img/spinner.gif') no-repeat");
-    $(local).attr("id",name);
+    var selfVideo = $(".self-video-small");
+    $(selfVideo).css("background","white center url('../img/spinner.gif') no-repeat");
+    $(selfVideo).attr("id",name);
     handler = "../webRtcInput/" + name;
     var producer = {
         localVideoTag: name,
@@ -87,71 +75,26 @@ function start() {
     }
 }
 
-function checkName(name){
-    var x = 0;
-    for(var i=0;i<name.length;i++){
-        var x = name.charCodeAt(i);
-        if(!((x>64&&x<91)||(x>96&&x<123))){
-            name = name.replace(name.charAt(i),"");
-        }
+/**
+ * Called when the "Terminate" button is clicked.
+ */
+function terminate() {
+    if (!conn) {
+        alert("No connection to terminate.");
+        return false;
     }
-    return name;
+    $("#player").fadeIn('slow');
+    $("#"+name).removeAttr("src");
+    $("#terminate").attr("disabled","disabled");
+    $("#start").removeAttr("disabled");
+    conn.terminate();
 }
 
-function newVideoTag(name){
-    var div = document.createElement("div");
-    $(div).attr('class','remote-producer');
-    $(div).attr('id',name+'-container');
-    var name_container = document.createElement("div");
-    $(name_container).attr('class','name');
-    var label = document.createElement("label");
-    $(label).html(name);
-    $(label).attr('class','label');
-    var close = document.createElement("input");
-    $(close).attr('type','button');
-    $(close).attr('class','input');
-    $(close).attr('value','Cancel');
-    $(close).click(function(){
-        alert(name);
-    });
-    $(name_container).append(label);
-    $(name_container).append(close);
-    $(div).append(name_container);
-    var video = document.createElement("video");
-    $(video).attr('id',name);
-    $(video).attr('autoplay','');
-    $(video).attr('controls','');
-    $(div).append(video);
-    $("#videos").append(div);
-}
-
-function newNotification(name){
-    var div = document.createElement("div");
-    $(div).attr("id","new-stream-" + name);
-    var label = document.createElement("label");
-    $(label).html(name);
-    $(div).append(label);
-    var accept = document.createElement("div");
-    $(accept).attr("id","ok");
-    $(accept).html('<i class="fa fa-check"></i>');
-    accept.name = name;
-    $(accept).click(function(){
-        acceptBroadcast(this.name);
-    });   
-    $(div).append(accept);
-    var reject = document.createElement("div");
-    $(reject).attr("id","notOk");
-    $(reject).html('<i class="fa fa-times"></i>');
-    reject.name = name;
-    $(reject).click(function(){
-        hideNotification(this.name);
-    });
-    $(div).append(reject);
-    $("#new-streams").append(div);
-}
-
-function acceptBroadcast(name){
-    newVideoTag(name);
+/**
+ * Creates a new connection to receive the http stream of the selected producer.
+ * @param {string} producer of the new stream
+ */
+function acceptBroadcast(producer){
     var broadcast = "../httpOutput/" + name;
     var option = { 
         remoteVideoTag: name,
@@ -160,6 +103,9 @@ function acceptBroadcast(name){
     };
     try {
         var connection = new kwsContentApi.KwsContentPlayer(broadcast, option);
+        newVideoDiv(producer, connection);
+        var remote = $("#"+producer);
+        $(remote).css("background","white center url('../img/spinner.gif') no-repeat");
         initConnection(connection,broadcast);
     }
     catch(error) {
@@ -167,32 +113,3 @@ function acceptBroadcast(name){
     }
     hideNotification(name);
 }
-
-function hideNotification(name){
-    $("#new-stream-"+name).hide('slow', function(){ 
-        $("#new-stream-"+name).remove(); 
-    });
-}
-
-function onJoined(participant) {
-    newNotification(participant);
-}
-
-function onUnjoined(participant){
-    var div = document.createElement("div");    
-    $(div).attr("id","left");
-    $(div).html("<strong>"+participant+"</strong> has stopped broadcasting");
-    $("#videos").append(div);
-    $("#"+participant).hide('slow', function(){
-        $("#"+participant).remove();
-        $("#left").show('slow');
-        $("#left").css('display',"inline-block");
-    });
-    setTimeout(function(){
-        $("#left").hide('slow', function(){
-           $("#left").remove();
-        });
-        clearInterval(this);
-    },6000);
-}
-

@@ -57,6 +57,7 @@ public class WebRtcInput extends WebRtcContentHandler {
         // Participant
         WebRTCParticipant participant = new WebRTCParticipant(user_name,http_session_id,contentSession,webRtcEndpoint,recorderEndPoint);
         // Connect
+        participant.webrtcEndpoint.connect(participant.webrtcEndpoint);
         participant.webrtcEndpoint.connect(participant.recorderEndpoint);
         getUsersBroadcasting(participant);
         notifyJoined(participant);

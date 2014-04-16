@@ -36,17 +36,21 @@ import com.kurento.kmf.media.WebRtcEndpoint;
 public class Streaming extends WebRtcContentHandler {
 
     private WebRtcEndpoint firstWebRtcEndpoint;
-    private String sessionId;
+    private String session_id;
 
     @Override
     public synchronized void onContentRequest(WebRtcContentSession contentSession) throws Exception {	
         if (firstWebRtcEndpoint == null) {
+            session_id = contentSession.getSessionId();
+            // Media Pipeline
             MediaPipeline mp = contentSession.getMediaPipelineFactory().create();
             contentSession.releaseOnTerminate(mp);
+            // Media element
             firstWebRtcEndpoint = mp.newWebRtcEndpoint().build();
-            sessionId = contentSession.getSessionId();
             contentSession.releaseOnTerminate(firstWebRtcEndpoint);
+            // Connect
             firstWebRtcEndpoint.connect(firstWebRtcEndpoint);
+            // Start
             contentSession.start(firstWebRtcEndpoint);
 	} else {
             MediaPipeline mp = firstWebRtcEndpoint.getMediaPipeline();
@@ -59,8 +63,7 @@ public class Streaming extends WebRtcContentHandler {
     
     @Override
     public void onSessionTerminated(WebRtcContentSession contentSession,int code, String reason) throws Exception {
-        if (contentSession.getSessionId().equals(sessionId)) {
-            getLogger().info("Terminating first WebRTC session");
+        if (contentSession.getSessionId().equals(session_id)) {
             firstWebRtcEndpoint = null;
         }
         super.onSessionTerminated(contentSession, code, reason);

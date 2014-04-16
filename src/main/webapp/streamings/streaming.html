@@ -3,9 +3,9 @@
     <head>
         <meta charset="utf-8">
         <title>Streaming Demo</title>
-        <script src="../js/kws-content-api.js"></script>
         <link rel="stylesheet" type="text/css" href="../css/style.css"/>
-        <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+        <!--<script src="../js/kws-content-api.js"></script>
+        <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">-->
         <script src="../lib/adapter.js"></script>
         <script src="../lib/Console.js"></script>
         <script>
@@ -16,16 +16,8 @@
                 console = new Console("console", console);
             }
 
-            function terminate() {
-                if (conn == null) {
-                    alert("No connection to terminate.");
-                    return false;
-                }
-                conn.terminate();
-                location.reload();
-            }
-
-            function initConnection(conn) {
+            function initConnection(conn, handler) {
+                console.log("Creating connection to " + handler);
                 conn.on("start", function(event) {
                     console.log("Connection started");
                 });
@@ -47,27 +39,33 @@
             }
 
             function start() {
-		var remoteVideo = document.getElementById("streaming-remoteVideo");
+		var remoteVideo = document.getElementById("streaming-video");
 		remoteVideo.style.background = "white center url('../img/spinner.gif') no-repeat";
-                remoteVideo.style.width ="50%"
-		var handler = "../streaming"
-		var options = { remoteVideoTag: "streaming-remoteVideo" };
+		var handler = "../streaming";
+		var options = { remoteVideoTag: "self-video" };
 		try {
                     conn = new kwsContentApi.KwsWebRtcContent(handler, options);
-                    console.log("Creating connection to " + handler);
-                    initConnection(conn);
+                    initConnection(conn, handler);
 		}
 		catch(error) {
                     console.error(error.message);
 		}
             }
+            
+            function terminate() {
+                if (!conn) {
+                    alert("No connection to terminate.");
+                    return false;
+                }
+                conn.terminate();
+            }
         </script>
     </head>
     <body>
-        <header class="header"><a href="../index.html" style="text-decoration: none; color: white;"><i class="fa fa-arrow-circle-o-left"></i> Streaming Demo</a></header>
-        <section class="streaming-section">
-            <article class="streaming-article">
-                <video id="streaming-remoteVideo" autoplay controls></video>
+        <header><a href="../index.html" style="text-decoration: none; color: white;"><i class="fa fa-arrow-circle-o-left"></i> Streaming Demo</a></header>
+        <section>
+            <article>
+                <video id="self-video" autoplay controls></video>
                 <button id="start" onclick="start()">Start</button>
                 <button id="terminate" onclick="terminate()">Terminate</button>
             </article>

@@ -1,8 +1,5 @@
-var conn;
-var urls = new Array();
-var handler;
-var idController = 1;
-var name = "";
+
+var conn, handler, name;
 
 var Event = {
     ON_JOINED : "onJoined",
@@ -13,45 +10,25 @@ window.onload = function() {
     console = new Console("console", console);
 };
 
-function player(name){
-    $("#player").click(function(){
-        var path = './player.html?name=' + name;
-        window.location.href = path;
-    });
-}
-
-function terminate() {
-    if (conn == null) {
-        alert("No connection to terminate.");
-        return false;
-    }
-    $("#player").fadeIn('slow');
-    $("#"+name).removeAttr("src");
-    $("#terminate").attr("disabled","disabled");
-    $("#start").removeAttr("disabled");
-    conn.terminate();
-}
-
-function initConnection(conn) {
+function initConnection(conn, handler) {
     console.log("Creating connection to " + handler);
-    conn.on("start", function(event){});
-    conn.on("terminate", function(event){
-        alert("Connection has been terminated");
-        $($("#local")).css("background","black");
-        $("#"+name).css("background","black");
-        conn = null;
+    conn.on("start", function(event) {
+        console.log("Connection started");
+    });
+    conn.on("terminate", function(event) {
+        console.log("Connection terminated");
     });
     conn.on("localstream", function(event) {
-        console.log("--------LOCAL SET!---------\n\n");
+        console.info("LocalStream set");
     });
     conn.on("remotestream", function(event) {
-        console.log("--------REMOTE SET!---------\n\n");
+        console.info("RemoteStream set");
     });
     conn.on("mediaevent", function(event) {
         if(Event.ON_JOINED === event.type){
             console.log(event.data);
             var participant_data = jQuery.parseJSON(event.data);
-            onJoined(participant_data.name);
+            onJoined(participant_data.name, acceptBroadcast, hideNotification);
         }else if(Event.ON_UNJOINED === event.type){
             var participant_data = jQuery.parseJSON(event.data);
             onUnjoined(participant_data.name);
@@ -64,6 +41,9 @@ function initConnection(conn) {
     });
 }
 
+/**
+ * Called when the "Start" button is clicked.
+ */
 function start() {
     name = $("#name").val();
     if(!name){
@@ -72,116 +52,61 @@ function start() {
     }
     name = checkName(name);
     if(!name) name = "user";
-    player(name);
+    player(name,0);
     $("#start").attr("disabled","disabled");
-    var local = $("#local");
-    $(local).css("background","white center url('../img/spinner.gif') no-repeat");
-    $(local).css("width","300px");
+    var selfVideo = $(".self-video-small");
+    $(selfVideo).css("background","white center url('../img/spinner.gif') no-repeat");
+    $(selfVideo).attr("id",name);
     handler = "../manyToMany/" + name;
     var producer = {
-        localVideoTag: "local",
+        localVideoTag: name,
         audio: "sendonly",
 	video: "sendonly"
     };
     try {
         conn = new kwsContentApi.KwsWebRtcContent(handler,producer);
-        initConnection(conn);
+        initConnection(conn, handler);
     }
     catch(error) {
         console.error(error.message);
     }
 }
 
-function checkName(name){
-    var x = 0;
-    for(var i=0;i<name.length;i++){
-        var x = name.charCodeAt(i);
-        if(!((x>64&&x<91)||(x>96&&x<123))){
-            name = name.replace(name.charAt(i),"");
-        }
+/**
+ * Called when the "Terminate" button is clicked.
+ */
+function terminate() {
+    if (!conn) {
+        alert("No connection to terminate.");
+        return false;
     }
-    return name;
+    $("#player").fadeIn('slow');
+    $("#"+name).removeAttr("src");
+    $("#terminate").attr("disabled","disabled");
+    $("#start").removeAttr("disabled");
+    conn.terminate();
 }
 
-function newVideoTag(name){
-    var remote = document.createElement("video");
-    $(remote).attr('controls','');
-    $(remote).attr('autoplay','');
-    $(remote).attr('id',name);
-    $(remote).css("background","white center url('../img/spinner.gif') no-repeat");
-    $(remote).css("width","300px");
-    $("#videos").append(remote);
-}
-
-function newNotification(name){
-    var div = document.createElement("div");
-    $(div).attr("id","new-stream-" + name);
-    var label = document.createElement("label");
-    $(label).html(name);
-    $(div).append(label);
-    var accept = document.createElement("div");
-    $(accept).attr("id","ok");
-    $(accept).html('<i class="fa fa-check"></i>');
-    accept.name = name;
-    $(accept).click(function(){
-        acceptBroadcast(this.name);
-    });   
-    $(div).append(accept);
-    var reject = document.createElement("div");
-    $(reject).attr("id","notOk");
-    $(reject).html('<i class="fa fa-times"></i>');
-    reject.name = name;
-    $(reject).click(function(){
-        rejectBroadcast(this.name);
-    });
-    $(div).append(reject);
-    $("#new-streams").append(div);
-}
-
-function acceptBroadcast(name){
-    newVideoTag(name);
-    var broadcast = "../manyToMany/" + name;
+/**
+ * Creates a new connection to receive the stream of the selected producer.
+ * @param {string} producer of the new stream
+ */
+function acceptBroadcast(producer){
+    var broadcast = "../manyToMany/" + producer;
     var option = { 
-        remoteVideoTag: name,
+        remoteVideoTag: producer,
         audio: "recvonly",
 	video: "recvonly"
     };
     try {
         var connection = new kwsContentApi.KwsWebRtcContent(broadcast, option);
-        initConnection(connection);
+        newVideoDiv(producer, connection);
+        var remote = $("#"+producer);
+        $(remote).css("background","white center url('../img/spinner.gif') no-repeat");
+        initConnection(connection,broadcast);
     }
     catch(error) {
         console.error(error.message);
     }
-    $("#new-stream-"+name).hide('slow', function(){ 
-        $("#new-stream-"+name).remove(); 
-    });
-}
-
-function rejectBroadcast(name){
-    $("#new-stream-"+name).hide('slow', function(){ 
-        $("#new-stream-"+name).remove(); 
-    });
-}
-
-function onJoined(participant) {
-    newNotification(participant);
-}
-
-function onUnjoined(participant){
-    var div = document.createElement("div");    
-    $(div).attr("id","left");
-    $(div).html("<strong>"+participant+"</strong> has stopped broadcasting");
-    $("#videos").append(div);
-    $("#"+participant).hide('slow', function(){
-        $("#"+participant).remove();
-        $("#left").show('slow');
-        $("#left").css('display',"inline-block");
-    });
-    setTimeout(function(){
-        $("#left").hide('slow', function(){
-           $("#left").remove();
-        });
-        clearInterval(this);
-    },6000);
+    hideNotification(producer);
 }
