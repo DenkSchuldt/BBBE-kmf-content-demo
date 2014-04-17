@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Bidirectional Streaming Demo</title>
+        <link rel="stylesheet" type="text/css" href="../css/style.css"/>
+        <script src="../js/kws-content-api.js"></script>
+        <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+        <script src="../lib/adapter.js"></script>
+        <script src="../lib/Console.js"></script>
+        <script>
+            
+            var conn, 
+                conn_2,
+                handler,
+                controller = true;
+
+            window.onload = function() {
+                console = new Console("console", console);
+            };
+            
+            /**
+            * Connection listener
+            * @param {object} conn which is the actuall connection
+            * @param {string} handler of the connection
+            */
+            function initConnection(conn,handler) {
+                console.log("Creating connection to " + handler);
+                conn.on("start", function(event) {
+                    console.log("Connection started");
+                });
+                conn.on("terminate", function(event) {
+                    console.log("Connection terminated");
+                });
+                conn.on("localstream", function(event) {
+                    console.info("LocalStream set");
+                });
+                conn.on("remotestream", function(event) {
+                    console.info("RemoteStream set");
+                });
+                conn.on("mediaevent", function(event) {
+                    console.info("MediaEvent: " + JSON.stringify(event.data));
+                });
+                conn.on("error", function(error) {
+                    console.error(error.message);
+                });
+            }
+
+            /**
+             * Called when the "Start" button is clicked.
+             */
+            function start() {
+                if(controller){
+                    var selfVideo = $("#self-video");		
+                    $(selfVideo).css('background',"white center url('../img/spinner.gif') no-repeat");
+                    var selfRemote = $("#self-remote");
+                    $(selfRemote).css('background',"white center url('../img/spinner.gif') no-repeat");
+                    handler = "../bidirectional";
+                    var options = {
+                        localVideoTag: "self-video",
+                        remoteVideoTag: "self-remote",
+                        audio: "sendonly"
+                    };
+                    try {
+                        conn = new kwsContentApi.KwsWebRtcContent(handler, options);
+                        initConnection(conn, handler);
+                        controller = false;
+                        $("#start").html("New Connection");
+                    }
+                    catch(error) {
+                        console.error(error.message);
+                    }
+                }else{
+                    var remoteRemote = $("#remote-remote");
+                    $(remoteRemote).css('background',"white center url('../img/spinner.gif') no-repeat");
+                    var option = { 
+                        remoteVideoTag: "remote-remote",
+                        audio: "recvonly",
+                        video: "recvonly"
+                    };
+                    try {
+                        conn_2 = new kwsContentApi.KwsWebRtcContent(handler, option);
+                        var remote = $('#remoteConn');
+                        $(remote).click(function(){
+                            conn_2.terminate();
+                        });
+                        initConnection(conn_2);
+                        $("#start").prop('disabled', true);
+                    }
+                    catch(error) {
+                        console.error(error.message);
+                    }
+                }
+            }
+            
+            /**
+             * Called when the "Terminate" button is clicked.
+             */
+            function terminate() {
+                if (!conn) {
+                    alert("No connection to terminate.");
+                    return false;
+                }
+                if(conn_2) conn_2.terminate();
+                conn.terminate();
+                location.reload();
+            }
+        </script>
+    </head>
+    <body>
+        <header><a href="../index.html" style="text-decoration: none; color: white;"><i class="fa fa-arrow-circle-o-left"></i> Bidirectional Streaming Demo</a></header>
+        <section>
+            <article>
+                <div id="description">
+                    <p>This demo allows two users to be connected using WebRTC. The big video is for the local stream of the first user, and the two small videos are for the self-remote stream (the one which comes from the server), and the remote stream from the second user. Press "Start" to initiate a new connection, and once a second user is connected, press "New Connection".</p>
+                </div>
+                <video id="self-video" autoplay controls></video>
+                <div id="video-divs">
+                    <div class="video-div">
+                        <div class="title-bar">
+                            <label class="name">Self-remote</label>
+                        </div>
+                        <video id="self-remote" autoplay controls></video>
+                    </div>
+                    <div class="video-div">
+                        <div class="title-bar">
+                            <label class="name">Remote</label>
+                            <input class="terminate" type="button" value="Terminate" id="remoteConn"></input>
+                        </div>
+                        <video id="remote-remote" autoplay controls></video>
+                    </div>
+                </div>
+                <button id="start" onclick="start()">Start</button>
+                <button id="terminate" onclick="terminate()">Terminate</button>
+            </article>
+        </section>
+        <footer>BigBlueButton Ecuador 2014</footer>
+        <div id="console"></div>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    </body>
+</html>
