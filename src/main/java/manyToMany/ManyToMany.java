@@ -27,8 +27,8 @@ public class ManyToMany extends WebRtcContentHandler{
     public static final String EVENT_ON_UNJOINED = "onUnjoined";
     public static String TARGET = "";
 
-    public static Map<String, WebRTCParticipant> participants;
-    public static MediaPipeline mp;
+    private static Map<String, WebRTCParticipant> participants;
+    private static MediaPipeline mp;
     private String http_session_id;
     
     @Override
@@ -66,7 +66,9 @@ public class ManyToMany extends WebRtcContentHandler{
             TARGET = "file:///tmp/" + user_name + ".webm"; // mp4
             // Media elements
             WebRtcEndpoint webRtcEndpoint = mp.newWebRtcEndpoint().build();
+            contentSession.releaseOnTerminate(webRtcEndpoint);
             RecorderEndpoint recorderEndPoint = mp.newRecorderEndpoint(TARGET).withMediaProfile(mediaProfileSpecType).build();
+            contentSession.releaseOnTerminate(recorderEndPoint);
             // Participant
             WebRTCParticipant participant = new WebRTCParticipant(user_name,http_session_id,contentSession,webRtcEndpoint,recorderEndPoint);
             // Connect
@@ -90,13 +92,12 @@ public class ManyToMany extends WebRtcContentHandler{
             }
         }
         notifyUnjoined(participant);
-        participant.webrtcEndpoint.release();
         participant.recorderEndpoint.stop();
-        participant.recorderEndpoint.release();
-        participant.contentSession.terminate(200,"No error");
         participants.remove(participant.getHttpSessionId());
+        participant.contentSession.terminate(200,"No error");
         if (participants.isEmpty()) {
             participants.clear();
+            mp = null;
         }
         super.onSessionTerminated(contentSession, code, reason);
     }

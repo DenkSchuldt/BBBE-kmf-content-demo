@@ -9,7 +9,8 @@ window.onload = function() {
     parameters = getUrlVars();
     name = parameters["name"];
     flag = parameters["flag"];
-    $(".multi-local").attr("id",name);
+    if(flag === '0') $("#back").attr("href","./manyToMany.html");
+    else if(flag === '1') $("#back").attr("href","./httpClient.html");
     $('#terminate').click(function(){
         terminate();
     });
@@ -34,11 +35,15 @@ function terminate(){
     }
     conn.terminate();
     setTimeout(function(){
-        if(flag === '0') window.location="../manyToMany.html";
-        else if(flag === '1') window.location="../httpClient.html";
+        if(flag === '0') window.location="./manyToMany.html";
+        else if(flag === '1') window.location="./httpClient.html";
     },2000);
 }
 
+/**
+ * Connection listener
+ * @param {object} conn which is the actuall connection
+ */
 function initConnection(conn) {
     console.log("Creating connection to " + handler);
     conn.on("start", function(event){});

@@ -11,6 +11,11 @@ window.onload = function() {
     console = new Console("console", console);
 };
 
+/**
+ * Connection listener
+ * @param {object} conn which is the actuall connection
+ * @param {string} handler of the connection
+ */
 function initConnection(conn,handler) {
     console.log("Creating connection to " + handler);
     conn.on("start", function(event){});
@@ -27,7 +32,6 @@ function initConnection(conn,handler) {
         if(Event.ON_JOINED === event.type){
             console.log("Joined: " + event.data);
             var participant_data = jQuery.parseJSON(event.data);
-            onJoined(participant_data.name);
             onJoined(participant_data.name, acceptBroadcast, hideNotification);
         }else if(Event.ON_UNJOINED === event.type){
             console.log("Unjoined: " + event.data);
@@ -85,6 +89,7 @@ function terminate() {
     }
     $("#player").fadeIn('slow');
     $("#"+name).removeAttr("src");
+    $("#"+name).css('background','black');
     $("#terminate").attr("disabled","disabled");
     $("#start").removeAttr("disabled");
     conn.terminate();
@@ -95,9 +100,9 @@ function terminate() {
  * @param {string} producer of the new stream
  */
 function acceptBroadcast(producer){
-    var broadcast = "../httpOutput/" + name;
+    var broadcast = "../httpOutput/" + producer;
     var option = { 
-        remoteVideoTag: name,
+        remoteVideoTag: producer,
         audio: "recvonly",
 	video: "recvonly"
     };
@@ -111,5 +116,5 @@ function acceptBroadcast(producer){
     catch(error) {
         console.error(error.message);
     }
-    hideNotification(name);
+    hideNotification(producer);
 }

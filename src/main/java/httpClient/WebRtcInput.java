@@ -53,7 +53,9 @@ public class WebRtcInput extends WebRtcContentHandler {
         TARGET = "file:///tmp/" + user_name + ".webm"; // mp4
         // Media elements
         WebRtcEndpoint webRtcEndpoint = mp.newWebRtcEndpoint().build();
+        contentSession.releaseOnTerminate(webRtcEndpoint);
         RecorderEndpoint recorderEndPoint = mp.newRecorderEndpoint(TARGET).withMediaProfile(mediaProfileSpecType).build();
+        contentSession.releaseOnTerminate(recorderEndPoint);
         // Participant
         WebRTCParticipant participant = new WebRTCParticipant(user_name,http_session_id,contentSession,webRtcEndpoint,recorderEndPoint);
         // Connect
@@ -77,13 +79,12 @@ public class WebRtcInput extends WebRtcContentHandler {
             }
         }
         notifyUnjoined(participant);
-        participant.webrtcEndpoint.release();
         participant.recorderEndpoint.stop();
-        participant.recorderEndpoint.release();
-        participant.contentSession.terminate(200,"No error");
         participants.remove(participant.getHttpSessionId());
+        participant.contentSession.terminate(200,"No error");
         if (participants.isEmpty()) {
             participants.clear();
+            mp = null;
         }
         super.onSessionTerminated(contentSession, code, reason);
     }

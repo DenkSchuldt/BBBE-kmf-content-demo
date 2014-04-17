@@ -10,6 +10,11 @@ window.onload = function() {
     console = new Console("console", console);
 };
 
+/**
+ * Connection listener
+ * @param {object} conn which is the actuall connection
+ * @param {string} handler of the connection
+ */
 function initConnection(conn, handler) {
     console.log("Creating connection to " + handler);
     conn.on("start", function(event) {
@@ -82,6 +87,7 @@ function terminate() {
     }
     $("#player").fadeIn('slow');
     $("#"+name).removeAttr("src");
+    $("#"+name).css('background','black');
     $("#terminate").attr("disabled","disabled");
     $("#start").removeAttr("disabled");
     conn.terminate();

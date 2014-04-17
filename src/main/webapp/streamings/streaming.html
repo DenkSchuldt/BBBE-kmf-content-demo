@@ -4,8 +4,8 @@
         <meta charset="utf-8">
         <title>Streaming Demo</title>
         <link rel="stylesheet" type="text/css" href="../css/style.css"/>
-        <!--<script src="../js/kws-content-api.js"></script>
-        <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">-->
+        <script src="../js/kws-content-api.js"></script>
+        <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
         <script src="../lib/adapter.js"></script>
         <script src="../lib/Console.js"></script>
         <script>
@@ -14,8 +14,13 @@
 
             window.onload = function() {
                 console = new Console("console", console);
-            }
+            };
 
+            /**
+             * Connection listener
+             * @param {object} conn which is the actuall connection
+             * @param {string} handler of the connection
+             */
             function initConnection(conn, handler) {
                 console.log("Creating connection to " + handler);
                 conn.on("start", function(event) {
@@ -38,8 +43,11 @@
                 });
             }
 
+            /**
+             * Called when the "Start" button is clicked.
+             */
             function start() {
-		var remoteVideo = document.getElementById("streaming-video");
+		var remoteVideo = document.getElementById("self-video");
 		remoteVideo.style.background = "white center url('../img/spinner.gif') no-repeat";
 		var handler = "../streaming";
 		var options = { remoteVideoTag: "self-video" };
@@ -51,7 +59,10 @@
                     console.error(error.message);
 		}
             }
-            
+           
+            /**
+             * Called when the "Terminate" button is clicked.
+             */
             function terminate() {
                 if (!conn) {
                     alert("No connection to terminate.");
@@ -65,6 +76,9 @@
         <header><a href="../index.html" style="text-decoration: none; color: white;"><i class="fa fa-arrow-circle-o-left"></i> Streaming Demo</a></header>
         <section>
             <article>
+                <div id="description">
+                    <p>This demo allows a user to broadcast a stream using WebRTC. "Start" will create a connection. Once the stream has been setup, incoming users can press start to receive the stream.</p>
+                </div>
                 <video id="self-video" autoplay controls></video>
                 <button id="start" onclick="start()">Start</button>
                 <button id="terminate" onclick="terminate()">Terminate</button>

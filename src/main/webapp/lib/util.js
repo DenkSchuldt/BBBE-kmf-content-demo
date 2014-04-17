@@ -41,20 +41,20 @@ function newVideoDiv(producer, connection){
     var name = document.createElement("label");
         $(name).attr('class','name');
         $(name).html(producer);
-    var close = document.createElement("input");
-        $(close).attr('class','close');
-        $(close).attr('type','button');
-        $(close).attr('value','Cancel');
-        close.connection = connection;
-        close.producer = producer;
-        $(close).click(function(){
+    var terminate = document.createElement("input");
+        $(terminate).attr('class','terminate');
+        $(terminate).attr('type','button');
+        $(terminate).attr('value','Terminate');
+        terminate.connection = connection;
+        terminate.producer = producer;
+        $(terminate).click(function(){
             this.connection.terminate();
             $("#"+producer+'-video-div').hide('slow', function(){
                 $("#"+producer+'-video-div').remove();
             });
         });
     $(titleBar).append(name);
-    $(titleBar).append(close);
+    $(titleBar).append(terminate);
     var video = document.createElement("video");
         $(video).attr('id',producer);
         $(video).attr('autoplay','');
