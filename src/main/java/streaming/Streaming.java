@@ -12,7 +12,7 @@
  * Lesser General Public License for more details.
  *
  */
-package com.kurento.demo.webrtc;
+package streaming;
 
 import com.kurento.kmf.content.WebRtcContentHandler;
 import com.kurento.kmf.content.WebRtcContentService;
@@ -30,23 +30,27 @@ import com.kurento.kmf.media.WebRtcEndpoint;
  * @author Boni Garcia (bgarcia@gsyc.es)
  * @since 3.0.7
  * 
- * @Modified by Denny K. Schuldt
+ * Modified by Denny K. Schuldt
  */
 @WebRtcContentService(path = "/streaming/*")
 public class Streaming extends WebRtcContentHandler {
 
     private WebRtcEndpoint firstWebRtcEndpoint;
-    private String sessionId;
+    private String session_id;
 
     @Override
     public synchronized void onContentRequest(WebRtcContentSession contentSession) throws Exception {	
         if (firstWebRtcEndpoint == null) {
+            session_id = contentSession.getSessionId();
+            // Media Pipeline
             MediaPipeline mp = contentSession.getMediaPipelineFactory().create();
             contentSession.releaseOnTerminate(mp);
+            // Media element
             firstWebRtcEndpoint = mp.newWebRtcEndpoint().build();
-            sessionId = contentSession.getSessionId();
             contentSession.releaseOnTerminate(firstWebRtcEndpoint);
+            // Connect
             firstWebRtcEndpoint.connect(firstWebRtcEndpoint);
+            // Start
             contentSession.start(firstWebRtcEndpoint);
 	} else {
             MediaPipeline mp = firstWebRtcEndpoint.getMediaPipeline();
@@ -56,16 +60,10 @@ public class Streaming extends WebRtcContentHandler {
             contentSession.start(newWebRtcEndpoint);
         }
     }
-
-    @Override
-    public void onContentStarted(WebRtcContentSession contentSession) {
-        //Empty
-    }
-
+    
     @Override
     public void onSessionTerminated(WebRtcContentSession contentSession,int code, String reason) throws Exception {
-        if (contentSession.getSessionId().equals(sessionId)) {
-            getLogger().info("Terminating first WebRTC session");
+        if (contentSession.getSessionId().equals(session_id)) {
             firstWebRtcEndpoint = null;
         }
         super.onSessionTerminated(contentSession, code, reason);
