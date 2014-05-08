@@ -6,7 +6,7 @@ import com.kurento.kmf.content.ContentEvent;
 import com.kurento.kmf.content.HttpPlayerHandler;
 import com.kurento.kmf.content.HttpPlayerService;
 import com.kurento.kmf.content.HttpPlayerSession;
-import com.kurento.kmf.media.HttpEndpoint;
+import com.kurento.kmf.media.HttpGetEndpoint;
 import com.kurento.kmf.media.MediaPipeline;
 
 /**
@@ -26,22 +26,15 @@ public class HttpOutput extends HttpPlayerHandler{
             mp = WebRtcInput.mp;
         }
         
-        contentSession.publishEvent(new ContentEvent("event","Map size: " + WebRtcInput.participants.size()));
-        contentSession.publishEvent(new ContentEvent("event","ContentSession content Id: " + contentSession.getContentId()));
         for (WebRTCParticipant p : WebRtcInput.participants.values()){
-            contentSession.publishEvent(new ContentEvent("event","WebRTCParticipant name: " + p.getUserName()));
             if(p.getUserName().equals(contentSession.getContentId())){
-                contentSession.publishEvent(new ContentEvent("event","Names are equal."));
                 // Media Elements
-                HttpEndpoint httpEndpoint = mp.newHttpGetEndpoint().build();
+                HttpGetEndpoint httpGetEndpoint = mp.newHttpGetEndpoint().terminateOnEOS().build();
                 // Connect
-                p.webrtcEndpoint.connect(httpEndpoint);
+                p.webrtcEndpoint.connect(httpGetEndpoint);
                 // Start
-                contentSession.start(httpEndpoint);
-                contentSession.publishEvent(new ContentEvent("event","Connection stablished"));
+                contentSession.start(httpGetEndpoint);
                 break;
-            }else{
-                contentSession.publishEvent(new ContentEvent("event","Names are different."));
             }
         }
     }

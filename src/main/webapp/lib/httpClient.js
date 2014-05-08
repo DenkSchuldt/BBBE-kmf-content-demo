@@ -1,5 +1,6 @@
 
 var conn, handler, name;
+var producers = [];
 
 var Event = {
     ON_JOINED : "onJoined",
@@ -33,10 +34,13 @@ function initConnection(conn,handler) {
             console.log("Joined: " + event.data);
             var participant_data = jQuery.parseJSON(event.data);
             onJoined(participant_data.name, acceptBroadcast, hideNotification);
+            producers[producers.length] = participant_data.name;
         }else if(Event.ON_UNJOINED === event.type){
             console.log("Unjoined: " + event.data);
             var participant_data = jQuery.parseJSON(event.data);
             onUnjoined(participant_data.name);
+            var index = producers.indexOf(participant_data.name);
+            producers.splice(index, 1);
         }else if(Event.ON_REMOTE === event.type){
             console.log("Remote: " + event.data);
         }else{
@@ -93,6 +97,17 @@ function terminate() {
     $("#terminate").attr("disabled","disabled");
     $("#start").removeAttr("disabled");
     conn.terminate();
+}
+
+/**
+ * Get the list of current available streams.
+ */
+function streams() {
+    if(producers.length>0 && conn!==null) {
+        producers.forEach(function(producer) {
+            onJoined(producer, acceptBroadcast, hideNotification);
+        });
+    }
 }
 
 /**

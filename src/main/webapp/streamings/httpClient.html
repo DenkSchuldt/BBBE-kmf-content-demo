@@ -15,13 +15,14 @@
         <header><a href="../index.html" style="text-decoration: none; color: white;"><i class="fa fa-arrow-circle-o-left"></i> Http Client Demo</a></header>
         <section>
             <div id="description">
-                <p>This demo allows many users to be connected with each others. A user could start broadcasting using WebRTC, becoming a producer. If there are already users broadcasting, he will receive a notification to decide if he wants to receive that stream using Http (becoming a client) or not. Similarly, existent producers will receive notifications when a new user is broadcasting.</p>
+                <p>This demo allows many users to be connected with each others. A user could start broadcasting using WebRTC, becoming a producer. If there are already users broadcasting, he will receive a notification to decide if he wants to receive that stream using Http (becoming a client) or not. Similarly, existent producers will receive notifications when a new user is broadcasting. Click the "Streams" button in case you have a connectivity error with another stream.</p>
             </div>
             <div id="user-name">
                 <label>Name: </label> 
                 <input type="text" id="name">
                 <button id="start" onclick="start()">Start</button>
                 <button id="terminate" onclick="terminate()">Terminate</button>
+                <button id="streams">Streams</button>
             </div>
             <article>
                 <div id="new-streams">

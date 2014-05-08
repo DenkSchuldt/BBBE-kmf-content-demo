@@ -259,3 +259,8 @@ article ul li {margin-left: 100px}
 }
 
 #player{ display: none }
+
+#streams{
+    float: right;
+    margin-right: 10px;
+}
